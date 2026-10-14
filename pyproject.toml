@@ -9,10 +9,13 @@ authors = [
 requires-python = ">=3.14"
 dependencies = [
     "alembic>=1.19.1",
+    "email-validator>=2.3.0",
     "fastapi>=0.141.1",
     "httpx2>=2.12.0",
     "psycopg2-binary>=2.9.12",
+    "pwdlib[argon2]>=0.3.1",
     "pydantic-settings>=2.15.0",
+    "pyjwt>=2.15.1",
     "python-dotenv>=1.2.3",
     "python-multipart>=0.0.32",
     "sqlalchemy>=2.0.52",
@@ -21,6 +24,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
     "pytest>=9.1.1",
 ]
 
