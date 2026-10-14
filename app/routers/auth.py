@@ -12,6 +12,7 @@ from app.schemas.auth import(
     RegisterRequest,
     TokenResponse,
     UserResponse,
+    ProfileUpdateRequest,
     ) 
 from app.services.auth_service import register_user
 from app.utils.security import verify_password
@@ -92,4 +93,26 @@ def get_my_profile(
 ):
     """Return the profile of the authenticated user."""
     return current_user
-    
+
+@router.patch("/me", response_model=UserResponse)
+def update_my_profile(
+    profile_data: ProfileUpdateRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Session = Depends(get_db),
+):
+    """Update permitted fields in the authenticated user's profile."""
+    updates = profile_data.model_dump(exclude_unset=True)
+    if not updates:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No profile changes were provided."
+        )
+    for field, value in updates.items():
+        setattr(current_user, field, value)      
+    try:
+        db.commit()
+        db.refresh(current_user)
+    except Exception:
+            db.rollback()
+            raise
+    return current_user

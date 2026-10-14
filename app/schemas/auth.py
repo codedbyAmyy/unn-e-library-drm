@@ -39,3 +39,8 @@ class UserResponse(BaseModel):
     department_id: int | None
     academic_level: int | None
     created_at: datetime
+
+class ProfileUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    full_name: str = Field(min_length=2, max_length=100)
