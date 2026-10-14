@@ -1,0 +1,28 @@
+[project]
+name = "e-library-with-digital-rights-management"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Amarachi Ege-Obetta", email = "amy1234obetta@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "alembic>=1.19.1",
+    "fastapi>=0.141.1",
+    "httpx2>=2.12.0",
+    "psycopg2-binary>=2.9.12",
+    "pydantic-settings>=2.15.0",
+    "python-dotenv>=1.2.3",
+    "python-multipart>=0.0.32",
+    "sqlalchemy>=2.0.52",
+    "uvicorn>=0.52.4",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
