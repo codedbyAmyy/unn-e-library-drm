@@ -1,10 +1,11 @@
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
 from app.config import settings
 from app.database import Base, get_db
+from app.models.academic import Faculty, Department
 from app.main import app as fastapi_app
 import app.models  # noqa: F401
 
@@ -28,6 +29,28 @@ def test_engine():
     Base.metadata.drop_all(bind=engine)
     engine.dispose()
 
+@pytest.fixture
+def test_department(test_engine):
+    with Session(test_engine) as db:
+        faculty = Faculty(
+            name="Test Faculty",
+            code="TST",
+        )
+        db.add(faculty)
+        db.flush()
+
+        department = Department(
+            name="Computer Science",
+            code="TCS",
+            faculty_id=faculty.id,
+        )
+        db.add(department)
+        db.commit()
+        db.refresh(department)
+
+        department_id = department.id
+
+    return department_id
 
 @pytest.fixture
 def client(test_engine):

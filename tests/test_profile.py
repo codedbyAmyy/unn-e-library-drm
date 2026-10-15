@@ -5,20 +5,22 @@ from sqlalchemy.orm import Session
 from app.models.user import User
 
 
-def student_payload():
+def student_payload(department_id):
     return {
         "full_name": "Profile Test Student",
         "email": "profile.student@example.com",
         "password": "StrongPassword123!",
         "role": "student",
-        "matric_number": "PROFILE/2026/001",
+        "matric_number": "2026/250100",
+        "department_id": department_id,
+        "academic_level": 300
     }
 
 
-def register_and_login(client):
+def register_and_login(client, test_department):
     registration = client.post(
         "/auth/register",
-        json=student_payload(),
+        json=student_payload(test_department),
     )
     assert registration.status_code == 201
 
@@ -35,8 +37,8 @@ def register_and_login(client):
     return {"Authorization": f"Bearer {token}"}
 
 
-def test_user_can_update_own_full_name(client, test_engine):
-    headers = register_and_login(client)
+def test_user_can_update_own_full_name(client, test_engine, test_department):
+    headers = register_and_login(client, test_department)
 
     response = client.patch(
         "/auth/me",
@@ -65,8 +67,8 @@ def test_profile_update_requires_authentication(client):
     assert response.status_code == 401
 
 
-def test_profile_update_rejects_short_name(client):
-    headers = register_and_login(client)
+def test_profile_update_rejects_short_name(client, test_department):
+    headers = register_and_login(client, test_department)
 
     response = client.patch(
         "/auth/me",
@@ -77,8 +79,8 @@ def test_profile_update_rejects_short_name(client):
     assert response.status_code == 422
 
 
-def test_profile_update_does_not_allow_role_change(client):
-    headers = register_and_login(client)
+def test_profile_update_does_not_allow_role_change(client, test_department):
+    headers = register_and_login(client, test_department)
 
     response = client.patch(
         "/auth/me",
@@ -93,8 +95,8 @@ def test_profile_update_does_not_allow_role_change(client):
     assert response.json()["role"] == "student"
 
 
-def test_profile_update_does_not_allow_account_status_change(client):
-    headers = register_and_login(client)
+def test_profile_update_does_not_allow_account_status_change(client, test_department):
+    headers = register_and_login(client, test_department)
 
     response = client.patch(
         "/auth/me",
@@ -109,8 +111,8 @@ def test_profile_update_does_not_allow_account_status_change(client):
     assert response.json()["is_active"] is True
 
 
-def test_profile_update_rejects_empty_request(client):
-    headers = register_and_login(client)
+def test_profile_update_rejects_empty_request(client, test_department):
+    headers = register_and_login(client, test_department)
 
     response = client.patch(
         "/auth/me",

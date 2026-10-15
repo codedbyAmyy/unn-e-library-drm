@@ -11,22 +11,24 @@ from app.config import settings
 from app.models.user import User
 from app.utils.dependencies import require_roles
 
-def student_payload():
+def student_payload(department_id):
     return {
         "full_name": "Security Test Student",
         "email": "security.student@example.com",
         "password": "StrongPassword123!",
         "role": "student",
-        "matric_number": "SECURITY/2026/001",
+        "matric_number": "2026/250100",
+        "department_id": department_id,
+        "academic_level": 300,
     }
 
 
-def register_and_login(client):
+def register_and_login(client, department_id):
     registration = client.post(
         "/auth/register",
-        json=student_payload(),
+        json=student_payload(department_id),
     )
-    assert registration.status_code == 201
+    assert registration.status_code == 201, registration.json()
 
     login = client.post(
         "/auth/login",
@@ -35,13 +37,13 @@ def register_and_login(client):
             "password": "StrongPassword123!",
         },
     )
-    assert login.status_code == 200
+    assert login.status_code == 200, login.json()
 
     return login.json()["access_token"]
 
 
-def test_authenticated_user_can_view_own_profile(client):
-    token = register_and_login(client)
+def test_authenticated_user_can_view_own_profile(client, test_department):
+    token = register_and_login(client, test_department)
 
     response = client.get(
         "/auth/me",
@@ -91,8 +93,8 @@ def test_profile_rejects_expired_token(client):
     assert response.status_code == 401
 
 
-def test_profile_rejects_inactive_user(client, test_engine):
-    token = register_and_login(client)
+def test_profile_rejects_inactive_user(client, test_engine, test_department):
+    token = register_and_login(client, test_department)
 
     with Session(test_engine) as db:
         user = db.scalar(
@@ -111,8 +113,8 @@ def test_profile_rejects_inactive_user(client, test_engine):
     assert response.status_code == 401
 
 
-def test_profile_rejects_token_after_role_changes(client, test_engine):
-    token = register_and_login(client)
+def test_profile_rejects_token_after_role_changes(client, test_engine, test_department):
+    token = register_and_login(client, test_department)
 
     with Session(test_engine) as db:
         user = db.scalar(

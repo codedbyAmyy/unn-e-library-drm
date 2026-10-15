@@ -15,7 +15,7 @@ def test_valid_student_registration():
         email="student@example.com",
         password="StrongPassword123!",
         role="student",
-        matric_number="TEST/2026/001",
+        matric_number="2026/250100",
     )
 
     assert user.role == "student"
