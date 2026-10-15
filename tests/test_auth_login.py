@@ -6,20 +6,22 @@ from app.models.user import User
 from app.utils.tokens import decode_access_token
 
 
-def student_payload():
+def student_payload(department_id):
     return {
         "full_name": "Login Test Student",
         "email": "login.student@example.com",
         "password": "StrongPassword123!",
         "role": "student",
-        "matric_number": "LOGIN/2026/001",
+        "matric_number": "2026/250101",
+        "department_id": department_id,
+        "academic_level": 300,
     }
 
 
-def test_successful_login_returns_access_token(client, test_engine):
+def test_successful_login_returns_access_token(client, test_engine, test_department):
     registration = client.post(
         "/auth/register",
-        json=student_payload(),
+        json=student_payload(test_department),
     )
     assert registration.status_code == 201
 
@@ -50,8 +52,8 @@ def test_successful_login_returns_access_token(client, test_engine):
         assert user.last_login_at is not None
 
 
-def test_login_rejects_wrong_password(client):
-    client.post("/auth/register", json=student_payload())
+def test_login_rejects_wrong_password(client, test_department):
+    client.post("/auth/register", json=student_payload(test_department))
 
     response = client.post(
         "/auth/login",
@@ -78,8 +80,8 @@ def test_login_rejects_unknown_email(client):
     assert response.json()["detail"] == "Invalid email or password."
 
 
-def test_login_rejects_inactive_account(client, test_engine):
-    client.post("/auth/register", json=student_payload())
+def test_login_rejects_inactive_account(client, test_engine, test_department):
+    client.post("/auth/register", json=student_payload(test_department))
 
     with Session(test_engine) as db:
         user = db.scalar(
