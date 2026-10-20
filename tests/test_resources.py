@@ -1,4 +1,6 @@
 import pytest
+from unittest.mock import patch
+from types import SimpleNamespace
 from sqlalchemy.orm import Session
 
 from app.models.user import User
@@ -281,3 +283,250 @@ def test_resource_rejects_duplicate_doi(
     )
 
     assert second_response.status_code == 409
+
+def test_resource_file_upload_endpoint_is_registered(client):
+    response = client.get("/openapi.json")
+
+    assert response.status_code == 200
+    assert "/resources/{resource_id}/files" in response.json()["paths"]
+
+
+def test_student_cannot_upload_resource_file(
+    client, student, librarian, test_department
+):
+    # Create a resource first.
+    librarian_token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+
+    resource_response = client.post(
+        "/resources",
+        json=resource_payload(department_id=test_department),
+        headers={
+            "Authorization": f"Bearer {librarian_token}"
+        },
+    )
+    assert resource_response.status_code == 201
+    resource_id = resource_response.json()["id"]
+
+    student_token = login_and_get_token(
+        client, "student@test.com"
+    )
+
+    response = client.post(
+        f"/resources/{resource_id}/files",
+        files={
+            "file": (
+                "notes.pdf",
+                b"%PDF-1.7\nTest PDF content",
+                "application/pdf",
+            )
+        },
+        headers={
+            "Authorization": f"Bearer {student_token}"
+        },
+    )
+
+    assert response.status_code == 403
+
+
+def test_unauthenticated_user_cannot_upload_resource_file(
+    client, librarian, test_department
+):
+    # Create a resource first.
+    token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+
+    resource_response = client.post(
+        "/resources",
+        json=resource_payload(department_id=test_department),
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resource_response.status_code == 201
+    resource_id = resource_response.json()["id"]
+
+    response = client.post(
+        f"/resources/{resource_id}/files",
+        files={
+            "file": (
+                "notes.pdf",
+                b"%PDF-1.7\nTest PDF content",
+                "application/pdf",
+            )
+        },
+    )
+
+    assert response.status_code == 401
+
+@patch("app.services.storage_service.upload_resource_file")
+def test_librarian_can_upload_resource_file(
+    mock_upload,
+    client,
+    librarian,
+    test_department,
+):
+    token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+
+    resource_response = client.post(
+        "/resources",
+        json=resource_payload(
+            department_id=test_department
+        ),
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert resource_response.status_code == 201
+    resource_id = resource_response.json()["id"]
+
+    pdf_content = b"%PDF-1.7\nTest PDF content"
+
+    response = client.post(
+        f"/resources/{resource_id}/files",
+        files={
+            "file": (
+                "lecture-notes.pdf",
+                pdf_content,
+                "application/pdf",
+            )
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 201
+
+    data = response.json()
+    assert data["message"] == (
+        "Resource file uploaded successfully."
+    )
+    assert data["file"]["resource_id"] == resource_id
+    assert data["file"]["original_filename"] == (
+        "lecture-notes.pdf"
+    )
+    assert data["file"]["mime_type"] == "application/pdf"
+    assert data["file"]["file_size_bytes"] == len(pdf_content)
+    assert len(data["file"]["checksum_sha256"]) == 64
+
+    mock_upload.assert_called_once()
+
+@patch("app.services.storage_service.supabase")
+def test_librarian_cannot_upload_non_pdf_file(
+    mock_supabase,
+    client,
+    librarian,
+    test_department,
+):
+    token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+
+    resource_response = client.post(
+        "/resources",
+        json=resource_payload(
+            department_id=test_department
+        ),
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert resource_response.status_code == 201
+    resource_id = resource_response.json()["id"]
+
+    response = client.post(
+        f"/resources/{resource_id}/files",
+        files={
+            "file": (
+                "notes.txt",
+                b"This is not a PDF",
+                "text/plain",
+            )
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == (
+        "Only PDF files are allowed."
+    )
+
+    mock_supabase.storage.from_.return_value.upload.assert_not_called()
+
+
+@patch("app.services.storage_service.supabase")
+def test_upload_rejects_nonexistent_resource(
+    mock_supabase,
+    client,
+    librarian,
+):
+    token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+
+    response = client.post(
+        "/resources/999999/files",
+        files={
+            "file": (
+                "notes.pdf",
+                b"%PDF-1.7\nTest PDF content",
+                "application/pdf",
+            )
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == (
+        "The selected resource does not exist."
+    )
+
+    mock_supabase.storage.from_.return_value.upload.assert_not_called()
+
+
+@patch("app.services.storage_service.supabase")
+def test_librarian_cannot_upload_oversized_file(
+    mock_supabase,
+    client,
+    librarian,
+    test_department,
+):
+    from app.services.storage_service import MAX_FILE_SIZE_BYTES
+
+    token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+
+    resource_response = client.post(
+        "/resources",
+        json=resource_payload(
+            department_id=test_department
+        ),
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert resource_response.status_code == 201
+    resource_id = resource_response.json()["id"]
+
+    oversized_content = (
+        b"%PDF-1.7\n"
+        + b"x" * MAX_FILE_SIZE_BYTES
+    )
+
+    response = client.post(
+        f"/resources/{resource_id}/files",
+        files={
+            "file": (
+                "large.pdf",
+                oversized_content,
+                "application/pdf",
+            )
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 413
+    assert response.json()["detail"] == (
+        "The file must not exceed 50 MB."
+    )
+
+    mock_supabase.storage.from_.return_value.upload.assert_not_called()
