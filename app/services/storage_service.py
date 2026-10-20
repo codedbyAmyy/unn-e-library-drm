@@ -32,7 +32,6 @@ def upload_resource_file(
         content_type=content_type,
         file_content=file_content,
     )
-    
     checksum = calculate_sha256(file_content)
 
     response = supabase.storage.from_(BUCKET_NAME).upload(
@@ -95,20 +94,16 @@ def upload_and_register_resource_file(
     is_primary: bool = False,
 ) -> ResourceFile:
     """Uploads a PDF and register its metadata in PostgreSQL"""
-    
     resource = db.get(Resource, resource_id)
     if resource is None:
         raise ValueError("The selected resource does not exist.")
-    
     storage_path = generate_storage_path(resource_id, filename)
-    
     upload_resource_file(
         filename=filename,
         file_content=file_content,
         storage_path=storage_path,
         content_type=content_type,
     )
-    
     file_record = ResourceFile(
         resource_id=resource_id,
         storage_path=storage_path,
@@ -118,19 +113,15 @@ def upload_and_register_resource_file(
         checksum_sha256=calculate_sha256(file_content),
         is_primary=is_primary,
     )
-    
     try:
         db.add(file_record)
         db.commit()
         db.refresh(file_record)
     except Exception:
         db.rollback()
-        
         try:
-            supabase.storage.from_(BUCKET_NAME).remove([storage_path]) 
+            supabase.storage.from_(BUCKET_NAME).remove([storage_path])
         except Exception:
             pass
-        
         raise
-    
     return file_record
