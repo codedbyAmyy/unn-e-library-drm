@@ -48,7 +48,43 @@ class ResourceCreateRequest(BaseModel):
         if not value:
             raise ValueError("This field cannot be blank.") 
         return value
-    
+
+class ResourceUpdateRequest(BaseModel):
+    """Validate partial updates to an existing library resource."""
+
+    title: str | None = Field(default=None, min_length=1, max_length=300)
+    abstract: str | None = Field(default=None, max_length=1000)
+    resource_type: ResourceType | None = None
+    publication_year: int | None = Field(default=None, ge=1000, le=9999)
+    publisher: str | None = Field(default=None, max_length=200)
+    isbn: str | None = Field(default=None, max_length=20)
+    doi: str | None = Field(default=None, max_length=100)
+    language: str | None = Field(default=None, min_length=1, max_length=50)
+    category_id: int | None = Field(default=None, gt=0)
+    department_id: int | None = Field(default=None, gt=0)
+    course_id: int | None = Field(default=None, gt=0)
+
+    @field_validator(
+        "title",
+        "language",
+        "publisher",
+        "isbn",
+        "doi",
+        mode="before",
+    )
+    @classmethod
+    def strip_text(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+        return value
+
+    @field_validator("title", "language")
+    @classmethod
+    def reject_blank_required_text(cls, value: str | None) -> str | None:
+        if value is not None and not value:
+            raise ValueError("This field cannot be blank.")
+        return value
+
 class ResourceResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     

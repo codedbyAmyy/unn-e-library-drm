@@ -530,3 +530,210 @@ def test_librarian_cannot_upload_oversized_file(
     )
 
     mock_supabase.storage.from_.return_value.upload.assert_not_called()
+
+def test_librarian_can_update_resource_title(
+    client, librarian, test_department
+):
+    token = login_and_get_token(client, "librarian@test.com")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    create_response = client.post(
+        "/resources",
+        json=resource_payload(department_id=test_department),
+        headers=headers,
+    )
+    assert create_response.status_code == 201
+    resource_id = create_response.json()["id"]
+
+    response = client.patch(
+        f"/resources/{resource_id}",
+        json={"title": "Updated Computer Science Book"},
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["title"] == "Updated Computer Science Book"
+    assert data["abstract"] == (
+        "A test resource for the university e-library."
+    )
+    assert data["department_id"] == test_department
+
+
+def test_student_cannot_update_resource(
+    client, librarian, student, test_department
+):
+    librarian_token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+    create_response = client.post(
+        "/resources",
+        json=resource_payload(department_id=test_department),
+        headers={"Authorization": f"Bearer {librarian_token}"},
+    )
+    assert create_response.status_code == 201
+    resource_id = create_response.json()["id"]
+
+    student_token = login_and_get_token(
+        client, "student@test.com"
+    )
+    response = client.patch(
+        f"/resources/{resource_id}",
+        json={"title": "Unauthorized Change"},
+        headers={"Authorization": f"Bearer {student_token}"},
+    )
+
+    assert response.status_code == 403
+
+
+def test_unauthenticated_user_cannot_update_resource(
+    client, librarian, test_department
+):
+    token = login_and_get_token(client, "librarian@test.com")
+    create_response = client.post(
+        "/resources",
+        json=resource_payload(department_id=test_department),
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert create_response.status_code == 201
+
+    response = client.patch(
+        f"/resources/{create_response.json()['id']}",
+        json={"title": "Unauthorized Change"},
+    )
+
+    assert response.status_code == 401
+
+
+def test_update_nonexistent_resource_returns_404(
+    client, librarian
+):
+    token = login_and_get_token(client, "librarian@test.com")
+
+    response = client.patch(
+        "/resources/999999",
+        json={"title": "Updated Title"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 404
+
+
+def test_update_resource_rejects_duplicate_isbn(
+    client, librarian, test_department
+):
+    token = login_and_get_token(client, "librarian@test.com")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    first = client.post(
+        "/resources",
+        json=resource_payload(
+            isbn="9780131103627",
+            department_id=test_department,
+        ),
+        headers=headers,
+    )
+    second = client.post(
+        "/resources",
+        json=resource_payload(
+            title="Another Book",
+            isbn="9780131103628",
+            department_id=test_department,
+        ),
+        headers=headers,
+    )
+    assert first.status_code == 201
+    assert second.status_code == 201
+
+    response = client.patch(
+        f"/resources/{second.json()['id']}",
+        json={"isbn": "9780131103627"},
+        headers=headers,
+    )
+
+    assert response.status_code == 409
+
+
+def test_update_resource_rejects_duplicate_doi(
+    client, librarian, test_department
+):
+    token = login_and_get_token(client, "librarian@test.com")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    first = client.post(
+        "/resources",
+        json=resource_payload(
+            doi="10.1234/first",
+            department_id=test_department,
+        ),
+        headers=headers,
+    )
+    second = client.post(
+        "/resources",
+        json=resource_payload(
+            title="Another Research Paper",
+            doi="10.1234/second",
+            department_id=test_department,
+        ),
+        headers=headers,
+    )
+    assert first.status_code == 201
+    assert second.status_code == 201
+
+    response = client.patch(
+        f"/resources/{second.json()['id']}",
+        json={"doi": "10.1234/first"},
+        headers=headers,
+    )
+
+    assert response.status_code == 409
+
+
+def test_update_resource_rejects_nonexistent_category(
+    client, librarian, test_department
+):
+    token = login_and_get_token(client, "librarian@test.com")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    created = client.post(
+        "/resources",
+        json=resource_payload(department_id=test_department),
+        headers=headers,
+    )
+    assert created.status_code == 201
+
+    response = client.patch(
+        f"/resources/{created.json()['id']}",
+        json={"category_id": 999999},
+        headers=headers,
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == (
+        "The selected category does not exist."
+    )
+
+
+def test_update_resource_rejects_nonexistent_department(
+    client, librarian, test_department
+):
+    token = login_and_get_token(client, "librarian@test.com")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    created = client.post(
+        "/resources",
+        json=resource_payload(department_id=test_department),
+        headers=headers,
+    )
+    assert created.status_code == 201
+
+    response = client.patch(
+        f"/resources/{created.json()['id']}",
+        json={"department_id": 999999},
+        headers=headers,
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == (
+        "The selected department does not exist."
+    )

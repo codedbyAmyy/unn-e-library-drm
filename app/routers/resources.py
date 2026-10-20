@@ -9,10 +9,12 @@ from app.models.user import User
 from app.schemas.resource import(
     ResourceCreateRequest,
     ResourceResponse,
+    ResourceUpdateRequest,
 )
 
 from app.services.resource_service import (
     create_resource,
+    update_resource,
 )
 
 from app.services.storage_service import (
@@ -110,3 +112,38 @@ def upload_resource_file_endpoint(
 
     finally:
         file.file.close()
+
+@router.patch("/{resource_id}", response_model=ResourceResponse)
+def update_library_resource(
+    resource_id: int,
+    resource_data: ResourceUpdateRequest,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User,
+        Depends(require_roles("librarian")),
+    ],
+):
+    """Update library resource metadata. Restricted to librarians."""
+
+    try:
+        return update_resource(
+            db=db,
+            resource_id=resource_id,
+            resource_data=resource_data,
+        )
+    except ValueError as exc:
+        if str(exc) == "Resource not found.":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(exc),
+            ) from exc
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+    except IntegrityError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A resource with the supplied ISBN or DOI already exists.",
+        ) from exc

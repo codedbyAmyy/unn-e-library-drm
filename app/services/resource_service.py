@@ -2,7 +2,10 @@ from sqlalchemy.orm import Session
 
 from app.models.academic import Course, Department
 from app.models.resource import Category, Resource
-from app.schemas.resource import ResourceCreateRequest
+from app.schemas.resource import (
+    ResourceCreateRequest,
+    ResourceUpdateRequest,
+)
 
 def create_resource(
     db: Session,
@@ -52,4 +55,69 @@ def create_resource(
         db.rollback()
         raise
     return resource
-        
+
+def update_resource(
+    db: Session,
+    resource_id: int,
+    resource_data: ResourceUpdateRequest,
+) -> Resource:
+    """Update the supplied metadata of an existing library resource."""
+
+    resource = db.get(Resource, resource_id)
+
+    if resource is None:
+        raise ValueError("Resource not found.")
+
+    data = resource_data.model_dump(exclude_unset=True)
+
+    # Validate the category, if supplied.
+    if "category_id" in data and data["category_id"] is not None:
+        if db.get(Category, data["category_id"]) is None:
+            raise ValueError("The selected category does not exist.")
+
+    # Validate the department, if supplied.
+    if "department_id" in data and data["department_id"] is not None:
+        if db.get(Department, data["department_id"]) is None:
+            raise ValueError("The selected department does not exist.")
+
+    # Validate the course, if supplied.
+    if "course_id" in data and data["course_id"] is not None:
+        course = db.get(Course, data["course_id"])
+
+        if course is None:
+            raise ValueError("The selected course does not exist.")
+
+        effective_department_id = data.get(
+            "department_id",
+            resource.department_id,
+        )
+
+        if (
+            effective_department_id is not None
+            and course.department_id != effective_department_id
+        ):
+            raise ValueError(
+                "The selected course does not belong to the selected department."
+            )
+
+    # If a course is supplied without a department, derive its department.
+    if (
+        data.get("course_id") is not None
+        and "department_id" not in data
+        and resource.department_id is None
+    ):
+        course = db.get(Course, data["course_id"])
+        data["department_id"] = course.department_id
+
+    try:
+        for field, value in data.items():
+            setattr(resource, field, value)
+
+        db.commit()
+        db.refresh(resource)
+
+    except Exception:
+        db.rollback()
+        raise
+
+    return resource
