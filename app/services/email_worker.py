@@ -20,23 +20,21 @@ LEASE_SECONDS = 120
 def utc_now():
     return datetime.now(timezone.utc)
 
-
-def process_next_email_job(db: Session) -> bool:
+def process_next_email_job(
+    db: Session,
+    job_id: int | None = None,
+) -> bool:
     """Claim and process one due job.
 
     Returns False when no work is available.
     """
-
     now = utc_now()
-
-    job = db.scalar(
+    job_query = (
         select(EmailDeliveryJob)
         .where(
             EmailDeliveryJob.attempt_count < MAX_ATTEMPTS,
             or_(
-                EmailDeliveryJob.status.in_(
-                    ("pending", "failed")
-                ),
+                EmailDeliveryJob.status.in_(("pending", "failed")),
                 EmailDeliveryJob.status == "processing",
             ),
             or_(
@@ -51,6 +49,13 @@ def process_next_email_job(db: Session) -> bool:
         .with_for_update(skip_locked=True)
         .limit(1)
     )
+
+    if job_id is not None:
+        job_query = job_query.where(
+            EmailDeliveryJob.id == job_id
+        )
+
+    job = db.scalar(job_query)
 
     if job is None:
         return False
