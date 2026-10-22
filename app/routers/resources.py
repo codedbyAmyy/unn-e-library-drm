@@ -17,6 +17,8 @@ from app.services.resource_service import (
     update_resource,
     publish_resource,
     unpublish_resource,
+    archive_resource,
+    unarchive_resource,
 )
 
 from app.services.storage_service import (
@@ -205,5 +207,56 @@ def unpublish_library_resource(
             ) from exc
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+        
+@router.post(
+    "/{resource_id}/archive",
+    response_model=ResourceResponse,
+)
+def archive_library_resource(
+    resource_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User,
+        Depends(require_roles("librarian")),
+    ]
+):
+    """Archive a resource. Librarians only."""
+    try:
+        return archive_resource(db, resource_id)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=(
+                status.HTTP_404_NOT_FOUND
+                if str(exc) == "Resource not found."
+                else status.HTTP_400_BAD_REQUEST
+            ),
+            detail=str(exc)
+        ) from exc
+        
+@router.post(
+    "/{resource_id}/unarchive",
+    response_model=ResourceResponse,
+)
+def unarchive_library_resource(
+    resource_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User,
+        Depends(require_roles("librarian")),
+    ],
+):
+    """Restore an archived resource to draft status."""
+    try:
+        return unarchive_resource(db, resource_id)
+    
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=(
+                status.HTTP_404_NOT_FOUND
+                if str(exc) == "Resource not found."
+                else status.HTTP_400_BAD_REQUEST
+            ),
             detail=str(exc),
         ) from exc

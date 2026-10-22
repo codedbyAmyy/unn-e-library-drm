@@ -133,6 +133,9 @@ def publish_resource(
 
     if resource is None:
         raise ValueError("Resource not found.")
+    
+    if resource.is_archived:
+        raise ValueError("Archived resources must be restored before publishing.")
 
     if resource.is_published:
         raise ValueError("Resource is already published.")
@@ -168,6 +171,54 @@ def unpublish_resource(
     try:
         resource.is_published = False
         resource.published_at = None
+        db.commit()
+        db.refresh(resource)
+    except Exception:
+        db.rollback()
+        raise
+    return resource
+
+def archive_resource(
+    db: Session,
+    resource_id: int,
+) -> Resource:
+    """Archive a resource without deleting its metadata or files."""
+    resource = db.get(Resource, resource_id)
+    if resource is None:
+        raise ValueError("Resource not found.")
+    if resource.is_archived:
+        raise ValueError("Resource is already published.")
+    try:
+        resource.is_archived = True
+        resource.archived_at = datetime.now(timezone.utc)
+        resource.is_published = False
+        resource.published_at = None
+        
+        db.commit()
+        db.refresh(resource)
+    except Exception:
+        db.rollback()
+        raise
+    return resource
+
+def unarchive_resource(
+    db: Session,
+    resource_id: int,
+) -> Resource:
+    """Restore an archived resource to unpublished draft status."""
+    resource = db.get(Resource, resource_id)
+    
+    if resource is None:
+        raise ValueError("Resource not found.")
+    if not resource.is_archived:
+        raise ValueError("Resource is not archived.")
+    
+    try:
+        resource.is_archived = False
+        resource.archived_at = None
+        resource.is_published = False
+        resource.published_at = None
+        
         db.commit()
         db.refresh(resource)
     except Exception:

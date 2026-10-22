@@ -1091,3 +1091,135 @@ def test_cannot_unpublish_already_unpublished_resource(
     assert response.json()["detail"] == (
         "Resource is already unpublished."
     )
+
+def test_librarian_can_archive_and_unarchive_resource(
+    client, librarian
+):
+    token = login_and_get_token(client, "librarian@test.com")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    created = client.post(
+        "/resources",
+        json=resource_payload(),
+        headers=headers,
+    )
+    assert created.status_code == 201
+    resource_id = created.json()["id"]
+
+    archived = client.post(
+        f"/resources/{resource_id}/archive",
+        headers=headers,
+    )
+
+    assert archived.status_code == 200
+    assert archived.json()["is_archived"] is True
+    assert archived.json()["is_published"] is False
+    assert archived.json()["archived_at"] is not None
+
+    restored = client.post(
+        f"/resources/{resource_id}/unarchive",
+        headers=headers,
+    )
+
+    assert restored.status_code == 200
+    assert restored.json()["is_archived"] is False
+    assert restored.json()["is_published"] is False
+    assert restored.json()["archived_at"] is None
+
+
+@pytest.mark.parametrize(
+    "action", ["archive", "unarchive"]
+)
+def test_student_cannot_manage_archiving(
+    client, librarian, student, action
+):
+    librarian_token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+
+    created = client.post(
+        "/resources",
+        json=resource_payload(),
+        headers={"Authorization": f"Bearer {librarian_token}"},
+    )
+    assert created.status_code == 201
+
+    student_token = login_and_get_token(
+        client, "student@test.com"
+    )
+
+    response = client.post(
+        f"/resources/{created.json()['id']}/{action}",
+        headers={"Authorization": f"Bearer {student_token}"},
+    )
+
+    assert response.status_code == 403
+
+
+@pytest.mark.parametrize(
+    "action", ["archive", "unarchive"]
+)
+def test_unauthenticated_user_cannot_manage_archiving(
+    client, action
+):
+    response = client.post(f"/resources/999999/{action}")
+    assert response.status_code == 401
+
+
+@pytest.mark.parametrize(
+    "action", ["archive", "unarchive"]
+)
+def test_archive_actions_reject_missing_resource(
+    client, librarian, action
+):
+    token = login_and_get_token(client, "librarian@test.com")
+
+    response = client.post(
+        f"/resources/999999/{action}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Resource not found."
+
+
+def test_archive_actions_reject_invalid_transitions(
+    client, librarian
+):
+    token = login_and_get_token(client, "librarian@test.com")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    created = client.post(
+        "/resources",
+        json=resource_payload(),
+        headers=headers,
+    )
+    assert created.status_code == 201
+    resource_id = created.json()["id"]
+
+    unarchive_first = client.post(
+        f"/resources/{resource_id}/unarchive",
+        headers=headers,
+    )
+    assert unarchive_first.status_code == 400
+
+    archived = client.post(
+        f"/resources/{resource_id}/archive",
+        headers=headers,
+    )
+    assert archived.status_code == 200
+
+    archive_again = client.post(
+        f"/resources/{resource_id}/archive",
+        headers=headers,
+    )
+    assert archive_again.status_code == 400
+
+    publish_archived = client.post(
+        f"/resources/{resource_id}/publish",
+        headers=headers,
+    )
+    assert publish_archived.status_code == 400
+    assert publish_archived.json()["detail"] == (
+        "Archived resources must be restored before publishing."
+    )

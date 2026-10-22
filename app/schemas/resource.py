@@ -1,4 +1,5 @@
 from typing import Literal
+from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -103,3 +104,5 @@ class ResourceResponse(BaseModel):
     uploaded_by: int
     is_published: bool
     is_featured: bool
+    is_archived: bool
+    archived_at: datetime | None
