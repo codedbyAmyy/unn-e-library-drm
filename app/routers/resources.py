@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Query
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Query, Request, Response
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -29,6 +29,10 @@ from app.services.storage_service import (
 from app.services.catalogue_service import (
     list_catalogue_resources,
     get_catalogue_resource,
+)
+from app.services.drm_service import (
+    DRMAccessError,
+    get_protected_pdf,
 )
 from app.utils.dependencies import require_roles, get_current_user
 
@@ -343,3 +347,85 @@ def get_library_resource(
         )
 
     return resource
+
+def serve_protected_resource(
+    resource_id: int,
+    db: Session,
+    current_user: User,
+    request: Request,
+    access_type: str,
+):
+    """Return a protected PDF after authorization."""
+    try:
+        pdf_bytes = get_protected_pdf(
+            db,
+            resource_id=resource_id,
+            user_id=current_user.id,
+            access_type=access_type,
+            ip_address=(
+                request.client.host
+                if request.client else None
+            ),
+            user_agent=request.headers.get("user-agent"),
+        )
+    except DRMAccessError as exc:
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail=exc.detail,
+        ) from exc
+        
+    disposition = (
+        "inline" if access_type == "view"
+        else "attachment"
+    )
+    
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": (
+                f'{disposition}; filename="resource-{resource_id}.pdf"'
+            ),
+            "Cache-Control": "private, no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
+
+@router.get("/{resource_id}/read")
+def read_library_resource(
+    resource_id: int,
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User, Depends(get_current_user)
+    ],
+):
+    """Read a protected and watermarked PDF."""
+
+    return serve_protected_resource(
+        resource_id,
+        db,
+        current_user,
+        request,
+        "view",
+    )
+
+
+@router.get("/{resource_id}/download")
+def download_library_resource(
+    resource_id: int,
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User, Depends(get_current_user)
+    ],
+):
+    """Download an authorized, watermarked PDF."""
+
+    return serve_protected_resource(
+        resource_id,
+        db,
+        current_user,
+        request,
+        "download",
+    )

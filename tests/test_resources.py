@@ -12,47 +12,6 @@ from app.models.academic import (
 from app.models.resource import ResourceAuthor
 from app.utils.security import hash_password
 
-
-@pytest.fixture
-def librarian(test_engine, test_department):
-    with Session(test_engine) as db:
-        user = User(
-            full_name="Test Librarian",
-            email="librarian@test.com",
-            password_hash=hash_password("TestPassword123!"),
-            role="librarian",
-            department_id=test_department,
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-
-        librarian_id = user.id
-
-    return librarian_id
-
-
-@pytest.fixture
-def student(test_engine, test_department):
-    with Session(test_engine) as db:
-        user = User(
-            full_name="Test Student",
-            email="student@test.com",
-            password_hash=hash_password("TestPassword123!"),
-            role="student",
-            matric_number="2026/250100",
-            department_id=test_department,
-            academic_level=300,
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-
-        student_id = user.id
-
-    return student_id
-
-
 def test_resources_endpoint_is_registered(client):
     response = client.get("/openapi.json")
 

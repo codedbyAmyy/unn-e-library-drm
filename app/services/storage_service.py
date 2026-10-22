@@ -125,3 +125,11 @@ def upload_and_register_resource_file(
             pass
         raise
     return file_record
+
+def download_private_pdf(storage_path: str) -> bytes:
+    """Retrieve a PDF from protected Supabase Storage."""
+    if not storage_path:
+        raise ValueError("A storage path is required.")
+    return supabase.storage.from_(BUCKET_NAME).download(
+        storage_path
+    )

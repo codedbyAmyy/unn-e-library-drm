@@ -5,7 +5,9 @@ from sqlalchemy.orm import sessionmaker, Session
 
 from app.config import settings
 from app.database import Base, get_db
+from app.models.user import User
 from app.models.academic import Faculty, Department
+from app.utils.security import hash_password
 from app.main import app as fastapi_app
 import app.models  # noqa: F401
 
@@ -74,3 +76,42 @@ def client(test_engine):
             yield test_client
     finally:
         fastapi_app.dependency_overrides.pop(get_db, None)
+
+@pytest.fixture
+def librarian(test_engine, test_department):
+    with Session(test_engine) as db:
+        user = User(
+            full_name="Test Librarian",
+            email="librarian@test.com",
+            password_hash=hash_password("TestPassword123!"),
+            role="librarian",
+            department_id=test_department,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        librarian_id = user.id
+
+    return librarian_id
+
+
+@pytest.fixture
+def student(test_engine, test_department):
+    with Session(test_engine) as db:
+        user = User(
+            full_name="Test Student",
+            email="student@test.com",
+            password_hash=hash_password("TestPassword123!"),
+            role="student",
+            matric_number="2026/250100",
+            department_id=test_department,
+            academic_level=300,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        student_id = user.id
+
+    return student_id
