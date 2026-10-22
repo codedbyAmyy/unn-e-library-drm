@@ -737,3 +737,357 @@ def test_update_resource_rejects_nonexistent_department(
     assert response.json()["detail"] == (
         "The selected department does not exist."
     )
+
+@patch("app.services.storage_service.upload_resource_file")
+def test_librarian_can_publish_resource_with_pdf(
+    mock_upload,
+    client,
+    librarian,
+    test_department,
+):
+    token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+
+    resource_response = client.post(
+        "/resources",
+        json=resource_payload(
+            department_id=test_department
+        ),
+        headers=headers,
+    )
+
+    assert resource_response.status_code == 201
+    resource_id = resource_response.json()["id"]
+    assert resource_response.json()["is_published"] is False
+
+    upload_response = client.post(
+        f"/resources/{resource_id}/files",
+        files={
+            "file": (
+                "lecture-notes.pdf",
+                b"%PDF-1.7\nTest PDF content",
+                "application/pdf",
+            )
+        },
+        headers=headers,
+    )
+
+    assert upload_response.status_code == 201
+    mock_upload.assert_called_once()
+
+    publish_response = client.post(
+        f"/resources/{resource_id}/publish",
+        headers=headers,
+    )
+
+    assert publish_response.status_code == 200
+    assert publish_response.json()["is_published"] is True
+
+def test_librarian_cannot_publish_resource_without_pdf(
+    client,
+    librarian,
+):
+    token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+
+    resource_response = client.post(
+        "/resources",
+        json=resource_payload(),
+        headers=headers,
+    )
+
+    assert resource_response.status_code == 201
+    resource_id = resource_response.json()["id"]
+
+    publish_response = client.post(
+        f"/resources/{resource_id}/publish",
+        headers=headers,
+    )
+
+    assert publish_response.status_code == 400
+    assert publish_response.json()["detail"] == (
+        "A resource must have an uploaded PDF before publishing."
+    )
+
+def test_student_cannot_publish_resource(
+    client,
+    librarian,
+    student,
+):
+    librarian_token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+
+    resource_response = client.post(
+        "/resources",
+        json=resource_payload(),
+        headers={
+            "Authorization": f"Bearer {librarian_token}"
+        },
+    )
+
+    assert resource_response.status_code == 201
+    resource_id = resource_response.json()["id"]
+
+    student_token = login_and_get_token(
+        client, "student@test.com"
+    )
+
+    response = client.post(
+        f"/resources/{resource_id}/publish",
+        headers={
+            "Authorization": f"Bearer {student_token}"
+        },
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == (
+        "You do not have permission to perform this action."
+    )
+
+def test_unauthenticated_user_cannot_publish_resource(
+    client,
+    librarian,
+):
+    token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+
+    resource_response = client.post(
+        "/resources",
+        json=resource_payload(),
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert resource_response.status_code == 201
+    resource_id = resource_response.json()["id"]
+
+    response = client.post(
+        f"/resources/{resource_id}/publish",
+    )
+
+    assert response.status_code == 401
+
+def test_librarian_cannot_publish_nonexistent_resource(
+    client,
+    librarian,
+):
+    token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+
+    response = client.post(
+        "/resources/999999/publish",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Resource not found."
+
+@patch("app.services.storage_service.upload_resource_file")
+def test_librarian_cannot_publish_already_published_resource(
+    mock_upload,
+    client,
+    librarian,
+):
+    token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+
+    resource_response = client.post(
+        "/resources",
+        json=resource_payload(),
+        headers=headers,
+    )
+
+    assert resource_response.status_code == 201
+    resource_id = resource_response.json()["id"]
+
+    upload_response = client.post(
+        f"/resources/{resource_id}/files",
+        files={
+            "file": (
+                "lecture-notes.pdf",
+                b"%PDF-1.7\nTest PDF content",
+                "application/pdf",
+            )
+        },
+        headers=headers,
+    )
+
+    assert upload_response.status_code == 201
+
+    first_publish = client.post(
+        f"/resources/{resource_id}/publish",
+        headers=headers,
+    )
+
+    assert first_publish.status_code == 200
+    assert first_publish.json()["is_published"] is True
+
+    second_publish = client.post(
+        f"/resources/{resource_id}/publish",
+        headers=headers,
+    )
+
+    assert second_publish.status_code == 400
+    assert second_publish.json()["detail"] == (
+        "Resource is already published."
+    )
+
+    mock_upload.assert_called_once()
+
+@patch("app.services.storage_service.upload_resource_file")
+def test_librarian_can_unpublish_resource(
+    mock_upload,
+    client,
+    librarian,
+):
+    token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+
+    resource_response = client.post(
+        "/resources",
+        json=resource_payload(),
+        headers=headers,
+    )
+
+    assert resource_response.status_code == 201
+    resource_id = resource_response.json()["id"]
+
+    upload_response = client.post(
+        f"/resources/{resource_id}/files",
+        files={
+            "file": (
+                "lecture-notes.pdf",
+                b"%PDF-1.7\nTest PDF content",
+                "application/pdf",
+            )
+        },
+        headers=headers,
+    )
+
+    assert upload_response.status_code == 201
+
+    publish_response = client.post(
+        f"/resources/{resource_id}/publish",
+        headers=headers,
+    )
+
+    assert publish_response.status_code == 200
+    assert publish_response.json()["is_published"] is True
+
+    unpublish_response = client.post(
+        f"/resources/{resource_id}/unpublish",
+        headers=headers,
+    )
+
+    assert unpublish_response.status_code == 200
+    assert unpublish_response.json()["is_published"] is False
+
+    mock_upload.assert_called_once()
+
+def test_student_cannot_unpublish_resource(
+    client,
+    librarian,
+    student,
+):
+    librarian_token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+
+    resource_response = client.post(
+        "/resources",
+        json=resource_payload(),
+        headers={"Authorization": f"Bearer {librarian_token}"},
+    )
+    assert resource_response.status_code == 201
+
+    resource_id = resource_response.json()["id"]
+    student_token = login_and_get_token(
+        client, "student@test.com"
+    )
+
+    response = client.post(
+        f"/resources/{resource_id}/unpublish",
+        headers={"Authorization": f"Bearer {student_token}"},
+    )
+
+    assert response.status_code == 403
+
+
+def test_unauthenticated_user_cannot_unpublish_resource(
+    client,
+    librarian,
+):
+    token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+
+    resource_response = client.post(
+        "/resources",
+        json=resource_payload(),
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resource_response.status_code == 201
+
+    resource_id = resource_response.json()["id"]
+
+    response = client.post(
+        f"/resources/{resource_id}/unpublish",
+    )
+
+    assert response.status_code == 401
+
+
+def test_unpublish_nonexistent_resource(
+    client,
+    librarian,
+):
+    token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+
+    response = client.post(
+        "/resources/999999/unpublish",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Resource not found."
+
+
+def test_cannot_unpublish_already_unpublished_resource(
+    client,
+    librarian,
+):
+    token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+
+    resource_response = client.post(
+        "/resources",
+        json=resource_payload(),
+        headers=headers,
+    )
+
+    assert resource_response.status_code == 201
+    resource_id = resource_response.json()["id"]
+
+    response = client.post(
+        f"/resources/{resource_id}/unpublish",
+        headers=headers,
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == (
+        "Resource is already unpublished."
+    )

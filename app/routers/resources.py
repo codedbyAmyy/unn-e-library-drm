@@ -15,6 +15,8 @@ from app.schemas.resource import(
 from app.services.resource_service import (
     create_resource,
     update_resource,
+    publish_resource,
+    unpublish_resource,
 )
 
 from app.services.storage_service import (
@@ -146,4 +148,62 @@ def update_library_resource(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="A resource with the supplied ISBN or DOI already exists.",
+        ) from exc
+
+@router.post(
+    "/{resource_id}/publish",
+    response_model=ResourceResponse,
+)
+def publish_library_resources(
+    resource_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User,
+        Depends(require_roles("librarian"))
+    ],
+):
+    """Publish a resource with an uploaded PDF. Librarians only."""
+    try:
+        return publish_resource(
+            db=db,
+            resource_id=resource_id,
+        )
+    except ValueError as exc:
+        if str(exc) == "Resource not found.":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(exc),
+            ) from exc
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+@router.post(
+    "/{resource_id}/unpublish",
+    response_model=ResourceResponse,
+)
+def unpublish_library_resource(
+    resource_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User,
+        Depends(require_roles("librarian")),
+    ]
+):
+    """Unpublish a resource. Restricted to librarians."""
+    try:
+        return unpublish_resource(
+            db=db,
+            resource_id=resource_id,
+        )
+    except ValueError as exc:
+        if str(exc) == "Resource not found.":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(exc),
+            ) from exc
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
         ) from exc

@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.models.academic import Course, Department
@@ -120,4 +121,56 @@ def update_resource(
         db.rollback()
         raise
 
+    return resource
+
+def publish_resource(
+    db: Session,
+    resource_id: int,
+) -> Resource:
+    """Publish an existing resource that has an uploaded PDF."""
+
+    resource = db.get(Resource, resource_id)
+
+    if resource is None:
+        raise ValueError("Resource not found.")
+
+    if resource.is_published:
+        raise ValueError("Resource is already published.")
+
+    if not resource.files:
+        raise ValueError(
+            "A resource must have an uploaded PDF before publishing."
+        )
+
+    try:
+        resource.is_published = True
+        resource.published_at = datetime.now(timezone.utc)
+
+        db.commit()
+        db.refresh(resource)
+
+    except Exception:
+        db.rollback()
+        raise
+
+    return resource
+
+def unpublish_resource(
+    db: Session,
+    resource_id: int,
+) -> Resource:
+    """Unpublish an existing published library resource."""
+    resource = db.get(Resource, resource_id)
+    if resource is None:
+        raise ValueError("Resource not found.")
+    if not resource.is_published:
+        raise ValueError("Resource is already unpublished.")
+    try:
+        resource.is_published = False
+        resource.published_at = None
+        db.commit()
+        db.refresh(resource)
+    except Exception:
+        db.rollback()
+        raise
     return resource
