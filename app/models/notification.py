@@ -55,6 +55,12 @@ class Notification(Base):
     
     is_read: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false", index=True)
     
+    in_app_visible: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default="true",
+    )
     # Foreign key to related resource
     resource_id: Mapped[int | None] = mapped_column(
         ForeignKey("resources.id", ondelete="SET NULL"),

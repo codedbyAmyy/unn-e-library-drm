@@ -91,6 +91,7 @@ def queue_new_resource_notifications(
                 f"A new resource, '{resource.title}', "
                 "has been published in the UNN E-Library."
             ),
+            in_app_visible=in_app_enabled,
             is_read=False,
         )
 
