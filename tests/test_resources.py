@@ -4,7 +4,12 @@ from types import SimpleNamespace
 from sqlalchemy.orm import Session
 
 from app.models.user import User
-from app.models.academic import Course
+from app.models.academic import (
+    Course,
+    Faculty, 
+    Department,
+)
+from app.models.resource import ResourceAuthor
 from app.utils.security import hash_password
 
 
@@ -1471,3 +1476,96 @@ def test_catalogue_rejects_invalid_pagination(
             headers=headers,
         )
         assert response.status_code == 422
+
+def test_catalogue_filters_resources_by_faculty(
+    client, librarian, test_engine, test_department
+):
+    token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+
+    with Session(test_engine) as db:
+        department = db.get(Department, test_department)
+        faculty_id = department.faculty_id
+
+        other_faculty = Faculty(
+            name="Faculty of Arts",
+            code="ART",
+        )
+        db.add(other_faculty)
+        db.flush()
+
+        other_department = Department(
+            name="English and Literary Studies",
+            code="ELS",
+            faculty_id=other_faculty.id,
+        )
+        db.add(other_department)
+        db.commit()
+        other_department_id = other_department.id
+
+    for title, department_id in [
+        ("Computer Science Handbook", test_department),
+        ("English Literature", other_department_id),
+    ]:
+        response = client.post(
+            "/resources",
+            json=resource_payload(
+                title=title,
+                department_id=department_id,
+            ),
+            headers=headers,
+        )
+        assert response.status_code == 201
+
+    response = client.get(
+        "/resources",
+        params={"faculty_id": faculty_id},
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+    assert response.json()["items"][0]["title"] == (
+        "Computer Science Handbook"
+    )
+
+
+def test_catalogue_searches_resource_authors(
+    client, librarian, test_engine
+):
+    token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+
+    created = client.post(
+        "/resources",
+        json=resource_payload(
+            title="Advanced Database Systems"
+        ),
+        headers=headers,
+    )
+
+    assert created.status_code == 201
+    resource_id = created.json()["id"]
+
+    with Session(test_engine) as db:
+        author = ResourceAuthor(
+            resource_id=resource_id,
+            author_name="Chinua Okafor",
+            author_order=1,
+        )
+        db.add(author)
+        db.commit()
+
+    response = client.get(
+        "/resources",
+        params={"search": "Chinua Okafor"},
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+    assert response.json()["items"][0]["id"] == resource_id
