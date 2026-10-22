@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Query
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -10,6 +10,7 @@ from app.schemas.resource import(
     ResourceCreateRequest,
     ResourceResponse,
     ResourceUpdateRequest,
+    ResourceListResponse,
 )
 
 from app.services.resource_service import (
@@ -25,7 +26,11 @@ from app.services.storage_service import (
     upload_and_register_resource_file,
     MAX_FILE_SIZE_BYTES,
 )
-from app.utils.dependencies import require_roles
+from app.services.catalogue_service import (
+    list_catalogue_resources,
+    get_catalogue_resource,
+)
+from app.utils.dependencies import require_roles, get_current_user
 
 router = APIRouter(prefix="/resources", tags=["Resources"])
 
@@ -260,3 +265,81 @@ def unarchive_library_resource(
             ),
             detail=str(exc),
         ) from exc
+        
+
+@router.get(
+    "",
+    response_model=ResourceListResponse,
+)
+def list_library_resources(
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User, Depends(get_current_user)
+    ],
+    search: Annotated[str | None, Query(max_length=200)] = None,
+    resource_type: Annotated[str | None, Query()] = None,
+    category_id: Annotated[int | None, Query(gt=0)] = None,
+    department_id: Annotated[int | None, Query(gt=0)] = None,
+    faculty_id: Annotated[int | None, Query(gt=0)] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+):
+    """Search and list resources according to the user's role."""
+
+    can_manage = current_user.role in (
+        "librarian", "admin"
+    )
+
+    resources, total = list_catalogue_resources(
+        db,
+        can_manage=can_manage,
+        search=search,
+        resource_type=resource_type,
+        category_id=category_id,
+        department_id=department_id,
+        faculty_id=faculty_id,
+        limit=limit,
+        offset=offset,
+    )
+
+    return ResourceListResponse(
+        total=total,
+        limit=limit,
+        offset=offset,
+        items=[
+            ResourceResponse.model_validate(resource)
+            for resource in resources
+        ],
+    )
+
+
+@router.get(
+    "/{resource_id}",
+    response_model=ResourceResponse,
+)
+def get_library_resource(
+    resource_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[
+        User, Depends(get_current_user)
+    ],
+):
+    """Retrieve a resource while enforcing catalogue visibility."""
+
+    can_manage = current_user.role in (
+        "librarian", "admin"
+    )
+
+    resource = get_catalogue_resource(
+        db,
+        resource_id,
+        can_manage=can_manage,
+    )
+
+    if resource is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resource not found.",
+        )
+
+    return resource

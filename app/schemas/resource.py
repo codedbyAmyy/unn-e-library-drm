@@ -106,3 +106,10 @@ class ResourceResponse(BaseModel):
     is_featured: bool
     is_archived: bool
     archived_at: datetime | None
+    
+
+class ResourceListResponse(BaseModel):
+    total: int
+    limit: int
+    offset: int
+    items: list[ResourceResponse]

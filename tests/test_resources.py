@@ -1223,3 +1223,251 @@ def test_archive_actions_reject_invalid_transitions(
     assert publish_archived.json()["detail"] == (
         "Archived resources must be restored before publishing."
     )
+
+def test_unauthenticated_user_cannot_list_resources(client):
+    response = client.get("/resources")
+    assert response.status_code == 401
+
+
+def test_student_cannot_see_unpublished_resource(
+    client, librarian, student
+):
+    librarian_token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+    created = client.post(
+        "/resources",
+        json=resource_payload(),
+        headers={"Authorization": f"Bearer {librarian_token}"},
+    )
+    assert created.status_code == 201
+    resource_id = created.json()["id"]
+
+    student_token = login_and_get_token(
+        client, "student@test.com"
+    )
+    headers = {"Authorization": f"Bearer {student_token}"}
+
+    listing = client.get("/resources", headers=headers)
+    assert listing.status_code == 200
+    assert listing.json()["total"] == 0
+
+    details = client.get(
+        f"/resources/{resource_id}",
+        headers=headers,
+    )
+    assert details.status_code == 404
+
+
+@patch("app.services.storage_service.upload_resource_file")
+def test_student_can_discover_published_resource(
+    mock_upload, client, librarian, student
+):
+    librarian_token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+    librarian_headers = {
+        "Authorization": f"Bearer {librarian_token}"
+    }
+
+    created = client.post(
+        "/resources",
+        json=resource_payload(title="Machine Learning Basics"),
+        headers=librarian_headers,
+    )
+    assert created.status_code == 201
+    resource_id = created.json()["id"]
+
+    uploaded = client.post(
+        f"/resources/{resource_id}/files",
+        files={
+            "file": (
+                "machine-learning.pdf",
+                b"%PDF-1.7\nTest PDF content",
+                "application/pdf",
+            )
+        },
+        headers=librarian_headers,
+    )
+    assert uploaded.status_code == 201
+
+    published = client.post(
+        f"/resources/{resource_id}/publish",
+        headers=librarian_headers,
+    )
+    assert published.status_code == 200
+
+    student_token = login_and_get_token(
+        client, "student@test.com"
+    )
+    headers = {"Authorization": f"Bearer {student_token}"}
+
+    listing = client.get(
+        "/resources",
+        params={"search": "Machine Learning"},
+        headers=headers,
+    )
+
+    assert listing.status_code == 200
+    assert listing.json()["total"] == 1
+    assert listing.json()["items"][0]["id"] == resource_id
+
+    details = client.get(
+        f"/resources/{resource_id}",
+        headers=headers,
+    )
+    assert details.status_code == 200
+    assert details.json()["title"] == "Machine Learning Basics"
+
+    mock_upload.assert_called_once()
+
+
+def test_librarian_can_list_draft_resources(
+    client, librarian
+):
+    token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+
+    created = client.post(
+        "/resources",
+        json=resource_payload(),
+        headers=headers,
+    )
+    assert created.status_code == 201
+
+    response = client.get("/resources", headers=headers)
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+    assert response.json()["items"][0]["is_published"] is False
+
+
+def test_catalogue_pagination_and_filters(
+    client, librarian, test_department
+):
+    token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+
+    for title, kind in [
+        ("Python Programming", "book"),
+        ("Database Research", "article"),
+        ("Computer Networks", "book"),
+    ]:
+        response = client.post(
+            "/resources",
+            json=resource_payload(
+                title=title,
+                resource_type=kind,
+                department_id=test_department,
+            ),
+            headers=headers,
+        )
+        assert response.status_code == 201
+
+    result = client.get(
+        "/resources",
+        params={
+            "resource_type": "book",
+            "department_id": test_department,
+            "limit": 1,
+            "offset": 0,
+        },
+        headers=headers,
+    )
+
+    assert result.status_code == 200
+    assert result.json()["total"] == 2
+    assert len(result.json()["items"]) == 1
+
+    second_page = client.get(
+        "/resources",
+        params={
+            "resource_type": "book",
+            "limit": 1,
+            "offset": 1,
+        },
+        headers=headers,
+    )
+
+    assert second_page.status_code == 200
+    assert len(second_page.json()["items"]) == 1
+    assert (
+        second_page.json()["items"][0]["id"]
+        != result.json()["items"][0]["id"]
+    )
+
+def test_student_cannot_see_archived_resource(
+    client, librarian, student
+):
+    librarian_token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+    librarian_headers = {
+        "Authorization": f"Bearer {librarian_token}"
+    }
+
+    created = client.post(
+        "/resources",
+        json=resource_payload(title="Archived Research"),
+        headers=librarian_headers,
+    )
+    assert created.status_code == 201
+    resource_id = created.json()["id"]
+
+    archived = client.post(
+        f"/resources/{resource_id}/archive",
+        headers=librarian_headers,
+    )
+    assert archived.status_code == 200
+
+    student_token = login_and_get_token(
+        client, "student@test.com"
+    )
+    student_headers = {
+        "Authorization": f"Bearer {student_token}"
+    }
+
+    listing = client.get(
+        "/resources",
+        headers=student_headers,
+    )
+    assert listing.status_code == 200
+    assert listing.json()["total"] == 0
+
+    details = client.get(
+        f"/resources/{resource_id}",
+        headers=student_headers,
+    )
+    assert details.status_code == 404
+
+    librarian_details = client.get(
+        f"/resources/{resource_id}",
+        headers=librarian_headers,
+    )
+    assert librarian_details.status_code == 200
+    assert librarian_details.json()["is_archived"] is True
+
+
+def test_catalogue_rejects_invalid_pagination(
+    client, librarian
+):
+    token = login_and_get_token(
+        client, "librarian@test.com"
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+
+    for parameters in [
+        {"limit": 0},
+        {"limit": 101},
+        {"offset": -1},
+    ]:
+        response = client.get(
+            "/resources",
+            params=parameters,
+            headers=headers,
+        )
+        assert response.status_code == 422
