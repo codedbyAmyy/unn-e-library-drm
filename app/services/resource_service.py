@@ -7,6 +7,7 @@ from app.schemas.resource import (
     ResourceCreateRequest,
     ResourceUpdateRequest,
 )
+from app.services.cas_service import queue_new_resource_notifications
 
 def create_resource(
     db: Session,
@@ -148,6 +149,9 @@ def publish_resource(
     try:
         resource.is_published = True
         resource.published_at = datetime.now(timezone.utc)
+        
+        # Save publication and its CAS records together
+        queue_new_resource_notifications(db, resource)
 
         db.commit()
         db.refresh(resource)

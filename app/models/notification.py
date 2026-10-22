@@ -9,6 +9,8 @@ from sqlalchemy import (
     String,
     Text,
     func,
+    Index,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -22,6 +24,16 @@ class Notification(Base):
             "notification_type IN "
             "('general', 'new_resource','resource_request','course_reading_list', 'system')",
             name="ck_notifications_valid_type",
+        ),
+        Index(
+            "uq_notifications_new_resource_user_resource",
+            "user_id",
+            "resource_id",
+            unique=True,
+            postgresql_where=text(
+                "notification_type = 'new_resource' "
+                "AND resource_id IS NOT NULL"
+            ),
         ),
     )
     

@@ -16,6 +16,8 @@ from app.models.notification import Notification
 from app.models.report import BrokenResourceReport
 from app.models.drm import DownloadRecord
 from app.models.audit_log import AuditLog
+from app.models.notification_preference import NotificationPreference
+from app.models.email_delivery_job import EmailDeliveryJob
 
 
 __all__ = [
@@ -36,4 +38,6 @@ __all__ = [
     "BrokenResourceReport",
     "DownloadRecord",
     "AuditLog",
+    "NotificationPreference",
+    "EmailDeliveryJob",
 ]
