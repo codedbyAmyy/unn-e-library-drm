@@ -5,6 +5,7 @@ from app.routers.auth import router as auth_router
 from app.routers.resources import router as resources_router
 from app.routers.notifications import router as notifications_router
 from app.routers.requests import router as requests_router
+from app.routers.reading_lists import router as reading_lists_router
 
 app = FastAPI(
     title="UNN E-Library API",
@@ -25,6 +26,7 @@ app.include_router(auth_router)
 app.include_router(resources_router)
 app.include_router(notifications_router)
 app.include_router(requests_router)
+app.include_router(reading_lists_router)
 
 @app.get("/")
 def root():
