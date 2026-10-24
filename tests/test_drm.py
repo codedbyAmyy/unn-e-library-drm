@@ -86,6 +86,13 @@ def test_student_can_read_watermarked_pdf(
     assert len(reader.pages) == 1
 
     text = reader.pages[0].extract_text()
+    with Session(test_engine) as db:
+        user = db.get(User, student)
+        expected_name = user.full_name.upper()
+        expected_matric = user.matric_number
+
+    assert expected_name in text
+    assert expected_matric in text
     assert "UNN E-Library" in text
     assert f"User ID: {student}" in text
     assert "UTC" in text
@@ -116,11 +123,17 @@ def test_student_can_download_watermarked_pdf(
 
     assert response.status_code == 200
     assert "attachment" in response.headers["content-disposition"]
+    
+    with Session(test_engine) as db:
+        user = db.get(User, student)
+        expected_name = user.full_name.upper()
+        expected_matric = user.matric_number
 
     reader = PdfReader(BytesIO(response.content))
-    assert f"User ID: {student}" in (
-        reader.pages[0].extract_text()
-    )
+    text = reader.pages[0].extract_text()
+
+    assert expected_name in text
+    assert expected_matric in text
 
     with Session(test_engine) as db:
         event = db.query(DownloadRecord).one()

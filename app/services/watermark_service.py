@@ -1,17 +1,36 @@
-
 from datetime import datetime, timezone
 from io import BytesIO
+from math import hypot
 
 from pypdf import PdfReader, PdfWriter
+from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen import canvas
 
 
-def watermark_pdf(pdf_bytes: bytes, user_id: int) -> bytes:
-    """Apply an identifiable watermark to every PDF page."""
+def watermark_pdf(
+    pdf_bytes: bytes,
+    user_id: int,
+    full_name: str,
+    matric_number: str | None = None,
+    staff_id: str | None = None,
+) -> bytes:
+    """Apply a prominent personalized watermark to every PDF page."""
 
     accessed_at = datetime.now(timezone.utc)
 
-    watermark_text = (
+    name = full_name.strip() or f"USER {user_id}"
+    identifier = (
+        matric_number
+        or staff_id
+        or f"USER ID: {user_id}"
+    )
+
+    # These are displayed prominently across the page.
+    name_text = name.upper()
+    identifier_text = identifier.upper()
+
+    # Secondary identification details.
+    footer_text = (
         f"UNN E-Library | User ID: {user_id} | "
         f"{accessed_at:%Y-%m-%d %H:%M UTC}"
     )
@@ -30,27 +49,93 @@ def watermark_pdf(pdf_bytes: bytes, user_id: int) -> bytes:
         width = float(page.mediabox.width)
         height = float(page.mediabox.height)
 
+        # Scale the watermark to the PDF page size.
+        diagonal = hypot(width, height)
+        maximum_text_width = diagonal * 0.72
+
+        font_size = min(width * 0.11, 58.0)
+
+        longest_text_width = max(
+            stringWidth(
+                name_text,
+                "Helvetica-Bold",
+                font_size,
+            ),
+            stringWidth(
+                identifier_text,
+                "Helvetica-Bold",
+                font_size,
+            ),
+        )
+
+        if longest_text_width > maximum_text_width:
+            font_size *= (
+                maximum_text_width / longest_text_width
+            )
+
         overlay_buffer = BytesIO()
+
         overlay = canvas.Canvas(
             overlay_buffer,
             pagesize=(width, height),
+            pageCompression=1,
         )
 
         overlay.saveState()
-        overlay.setFont("Helvetica", 9)
-        overlay.setFillGray(0.35)
+
+        # Approximately 25% opacity.
+        overlay.setFillAlpha(0.25)
+        overlay.setFillColorRGB(0.0, 0.35, 0.20)
+
+        # Position at the center and rotate diagonally.
+        overlay.translate(width / 2, height / 2)
+        overlay.rotate(35)
+
+        overlay.setFont(
+            "Helvetica-Bold",
+            font_size,
+        )
+
+        overlay.drawCentredString(
+            0,
+            font_size * 0.25,
+            name_text,
+        )
+
+        overlay.drawCentredString(
+            0,
+            -font_size * 0.95,
+            identifier_text,
+        )
+
+        overlay.restoreState()
+
+        # Smaller secondary information near the bottom.
+        overlay.saveState()
+        overlay.setFillAlpha(0.55)
+        overlay.setFillColorRGB(0.25, 0.25, 0.25)
+        overlay.setFont("Helvetica", 7)
+
         overlay.drawCentredString(
             width / 2,
-            25,
-            watermark_text,
+            20,
+            footer_text,
         )
+
         overlay.restoreState()
         overlay.save()
 
         overlay_buffer.seek(0)
-        watermark_page = PdfReader(overlay_buffer).pages[0]
+        watermark_page = PdfReader(
+            overlay_buffer
+        ).pages[0]
 
-        page.merge_page(watermark_page, over=True)
+        page.merge_page(
+            watermark_page,
+            over=True,
+        )
+
+        # Explicitly include the modified page.
         writer.add_page(page)
 
     output = BytesIO()

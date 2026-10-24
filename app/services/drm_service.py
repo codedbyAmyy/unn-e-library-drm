@@ -1,8 +1,8 @@
-
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.drm import DownloadRecord
+from app.models.user import User
 from app.models.resource import Resource, ResourceFile
 from app.services.storage_service import download_private_pdf
 from app.services.watermark_service import watermark_pdf
@@ -57,6 +57,19 @@ def get_protected_pdf(
 
     if access_type not in ("view", "download"):
         raise ValueError("Invalid access type.")
+    
+    user = db.get(User, user_id)
+
+    if user is None or not user.is_active:
+        raise DRMAccessError(
+            403,
+            "User is not authorized to access this resource.",
+        )
+    if user.role == "student" and not user.matric_number:
+        raise DRMAccessError(
+            403,
+            "Student matriculation number is required for protected access.",
+        )
 
     resource = db.get(Resource, resource_id)
 
@@ -110,7 +123,10 @@ def get_protected_pdf(
         )
         protected_pdf = watermark_pdf(
             original_pdf,
-            user_id,
+            user_id=user.id,
+            full_name=user.full_name,
+            matric_number=user.matric_number,
+            staff_id=user.staff_id,
         )
     except Exception as exc:
         raise DRMAccessError(
