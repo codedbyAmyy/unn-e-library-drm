@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Query, Request, Response
@@ -34,9 +35,12 @@ from app.services.drm_service import (
     DRMAccessError,
     get_protected_pdf,
 )
+from app.services.personalization_service import record_successful_read
 from app.utils.dependencies import require_roles, get_current_user
 
 router = APIRouter(prefix="/resources", tags=["Resources"])
+
+logger = logging.getLogger(__name__)
 
 @router.post(
     "",
@@ -373,7 +377,23 @@ def serve_protected_resource(
             status_code=exc.status_code,
             detail=exc.detail,
         ) from exc
-        
+    
+    # The protected PDF has already been generated successfully.
+    # Track successful reads, but never block legitimate DRM
+    # access because activity logging encountered a DB error.
+    if access_type == "view":
+        try:
+            record_successful_read(
+                db,
+                user_id=current_user.id,
+                resource_id=resource_id,
+            )
+        except Exception:
+            logger.exception(
+                "Reading history recording failed for resource %s",
+                resource_id,
+            )
+
     disposition = (
         "inline" if access_type == "view"
         else "attachment"
