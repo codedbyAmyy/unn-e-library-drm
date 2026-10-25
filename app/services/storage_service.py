@@ -1,5 +1,6 @@
 import hashlib
 from sqlalchemy.orm import Session
+from sqlalchemy import update
 
 from app.config import settings
 from app.models.resource import Resource, ResourceFile
@@ -85,6 +86,7 @@ def generate_storage_path(resource_id: int, filename: str) -> str:
     
     return f"resources/{resource_id}/{uuid4().hex}.pdf"
 
+
 def upload_and_register_resource_file(
     db: Session,
     resource_id: int,
@@ -93,17 +95,29 @@ def upload_and_register_resource_file(
     content_type: str,
     is_primary: bool = False,
 ) -> ResourceFile:
-    """Uploads a PDF and register its metadata in PostgreSQL"""
+    """Upload a PDF and register it as the selected primary file."""
+
     resource = db.get(Resource, resource_id)
     if resource is None:
         raise ValueError("The selected resource does not exist.")
+
+    # Validate before contacting private storage.
+    validate_resource_file(
+        filename=filename,
+        content_type=content_type,
+        file_content=file_content,
+    )
+
     storage_path = generate_storage_path(resource_id, filename)
+
+    # The remote upload must succeed before database changes.
     upload_resource_file(
         filename=filename,
         file_content=file_content,
         storage_path=storage_path,
         content_type=content_type,
     )
+
     file_record = ResourceFile(
         resource_id=resource_id,
         storage_path=storage_path,
@@ -113,17 +127,38 @@ def upload_and_register_resource_file(
         checksum_sha256=calculate_sha256(file_content),
         is_primary=is_primary,
     )
+
     try:
+        if is_primary:
+            # Serialize primary-file replacement for this resource.
+            db.query(Resource).filter(
+                Resource.id == resource_id
+            ).with_for_update().one()
+
+            # Preserve old attachments, but stop selecting them.
+            db.execute(
+                update(ResourceFile)
+                .where(ResourceFile.resource_id == resource_id)
+                .values(is_primary=False)
+            )
+
         db.add(file_record)
         db.commit()
         db.refresh(file_record)
+
     except Exception:
         db.rollback()
+
+        # Best-effort cleanup of the newly uploaded remote file.
         try:
-            supabase.storage.from_(BUCKET_NAME).remove([storage_path])
+            supabase.storage.from_(BUCKET_NAME).remove(
+                [storage_path]
+            )
         except Exception:
             pass
+
         raise
+
     return file_record
 
 def download_private_pdf(storage_path: str) -> bytes:

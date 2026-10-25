@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UNN Protected Reader</title>
+  <link rel="stylesheet" href="./css/reader-progress.css">
+</head>
+<body>
+  <header class="reader-header">
+    <strong>UNN E-Library · Protected Reader</strong>
+    <span id="resource-name">Preparing document…</span>
+    <div class="reader-header-actions">
+      <button id="download-pdf" class="reader-download" type="button" disabled aria-label="Download your personalized protected PDF">↓ Download protected PDF</button>
+      <a href="./index.html">← Back to library</a>
+    </div>
+  </header>
+  <main>
+    <div id="reader-state" role="status" aria-live="polite"></div>
+    <div id="reader-controls" hidden>
+      <button id="prev" type="button">← Previous</button>
+      <label>Page <input type="number" id="page" min="1" step="1" aria-label="Page number"> of <span id="total">–</span></label>
+      <button id="next" type="button">Next →</button>
+      <div class="reader-zoom" role="group" aria-label="PDF zoom controls">
+        <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
+        <span id="zoom-label" aria-live="polite">100%</span>
+        <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
+        <button id="zoom-reset" type="button" title="Fit page to reader width">Fit width</button>
+      </div>
+      <span id="progress-label"></span>
+    </div>
+    <div id="progress-track" role="progressbar" aria-label="Reading position" aria-valuemin="0" aria-valuemax="100"><div id="progress-fill"></div></div>
+    <div id="pdf-stage" aria-busy="true">
+      <canvas id="pdf-canvas" aria-label="Current PDF page"></canvas>
+      <div id="reader-loading" class="reader-loading" role="status" aria-live="polite">
+        <span class="reader-spinner" aria-hidden="true"></span>
+        <strong id="reader-loading-heading">Preparing your protected document</strong>
+        <span id="reader-loading-detail">Generating and opening your personalized PDF…</span>
+      </div>
+    </div>
+  </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" crossorigin="anonymous"></script>
+  <script type="module" src="./js/reader-progress.js"></script>
+</body>
+</html>

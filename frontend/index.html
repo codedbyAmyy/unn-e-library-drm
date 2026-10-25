@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>UNN E-Library | Academic Workspace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    />
+    <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="stylesheet" href="./css/accelerator.css" />
+    <link rel="stylesheet" href="./css/librarian.css" />
+    <link rel="stylesheet" href="./css/refinements.css" />
+    <link rel="stylesheet" href="./css/authors.css" />
+    <link rel="stylesheet" href="./css/search-filters.css" />
+    <link rel="stylesheet" href="./css/history-progress.css" />
+  </head>
+  <body class="dashboard-page">
+    <div class="app-layout">
+      <aside
+        id="sidebar"
+        class="sidebar"
+        aria-label="Primary navigation"
+      ></aside>
+      <div class="main-area">
+        <header class="topbar">
+          <button
+            id="menu-toggle"
+            class="menu-toggle"
+            type="button"
+            aria-label="Toggle navigation"
+          >
+            ☰
+          </button>
+          <div class="topbar-title">
+            <strong id="page-title">Dashboard</strong>
+          </div>
+          <div class="profile-chip">
+            <span id="profile-initial" class="avatar">U</span
+            ><span id="profile-name">Loading...</span
+            ><span id="role-label" class="role-pill">Member</span>
+          </div>
+        </header>
+        <main id="content" class="dashboard-content" tabindex="-1">
+          <p>Loading your dashboard…</p>
+        </main>
+      </div>
+    </div>
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>

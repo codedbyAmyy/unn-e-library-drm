@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -86,6 +87,33 @@ def login(
     )
     
     return TokenResponse(access_token=access_token)
+
+@router.post(
+    "/token",
+    response_model=TokenResponse,
+    include_in_schema=True,
+)
+def swagger_login(
+    form_data: Annotated[
+        OAuth2PasswordRequestForm,
+        Depends(),
+    ],
+    db: Session = Depends(get_db),
+):
+    """OAuth2-compatible login for Swagger documentation.
+
+    Use the librarian's email in the username field.
+    The regular JSON login remains available at /auth/login.
+    """
+    login_data = LoginRequest(
+        email=form_data.username,
+        password=form_data.password,
+    )
+
+    return login(
+        login_data=login_data,
+        db=db,
+    )
 
 @router.get("/me", response_model=UserResponse)
 def get_my_profile(

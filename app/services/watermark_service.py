@@ -1,10 +1,10 @@
 from datetime import datetime, timezone
 from io import BytesIO
-from math import hypot
 
 from pypdf import PdfReader, PdfWriter
-from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen import canvas
+
+from app.services.watermark_style import paint_personal_watermark
 
 
 def watermark_pdf(
@@ -14,8 +14,7 @@ def watermark_pdf(
     matric_number: str | None = None,
     staff_id: str | None = None,
 ) -> bytes:
-    """Apply a prominent personalized watermark to every PDF page."""
-
+    """Apply a subtle personalized watermark to every PDF page."""
     accessed_at = datetime.now(timezone.utc)
 
     name = full_name.strip() or f"USER {user_id}"
@@ -49,30 +48,7 @@ def watermark_pdf(
         width = float(page.mediabox.width)
         height = float(page.mediabox.height)
 
-        # Scale the watermark to the PDF page size.
-        diagonal = hypot(width, height)
-        maximum_text_width = diagonal * 0.72
-
-        font_size = min(width * 0.11, 58.0)
-
-        longest_text_width = max(
-            stringWidth(
-                name_text,
-                "Helvetica-Bold",
-                font_size,
-            ),
-            stringWidth(
-                identifier_text,
-                "Helvetica-Bold",
-                font_size,
-            ),
-        )
-
-        if longest_text_width > maximum_text_width:
-            font_size *= (
-                maximum_text_width / longest_text_width
-            )
-
+        
         overlay_buffer = BytesIO()
 
         overlay = canvas.Canvas(
@@ -81,34 +57,13 @@ def watermark_pdf(
             pageCompression=1,
         )
 
-        overlay.saveState()
-
-        # Approximately 25% opacity.
-        overlay.setFillAlpha(0.25)
-        overlay.setFillColorRGB(0.0, 0.35, 0.20)
-
-        # Position at the center and rotate diagonally.
-        overlay.translate(width / 2, height / 2)
-        overlay.rotate(35)
-
-        overlay.setFont(
-            "Helvetica-Bold",
-            font_size,
-        )
-
-        overlay.drawCentredString(
-            0,
-            font_size * 0.25,
+        paint_personal_watermark(
+            overlay,
+            width,
+            height,
             name_text,
-        )
-
-        overlay.drawCentredString(
-            0,
-            -font_size * 0.95,
             identifier_text,
         )
-
-        overlay.restoreState()
 
         # Smaller secondary information near the bottom.
         overlay.saveState()

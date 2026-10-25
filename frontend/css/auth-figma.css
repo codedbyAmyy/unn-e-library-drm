@@ -1,0 +1,175 @@
+/* Focused visual correction against UNN Figma login / registration frames. */
+.auth-body {
+  min-height: 100vh;
+  background: #f8f7f2;
+  display: flex;
+  flex-direction: column;
+}
+.auth-top {
+  position: absolute;
+  top: 6px;
+  left: 0;
+  right: 0;
+  background: transparent;
+  border: 0;
+  padding: 12px clamp(20px, 4vw, 52px);
+  z-index: 2;
+}
+.auth-top .brand {
+  font-size: 15px;
+  opacity: 0.9;
+}
+.auth-top .brand small {
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+.auth-shell {
+  width: min(760px, calc(100% - 40px));
+  max-width: 760px;
+  min-height: 0;
+  margin: auto;
+  display: grid;
+  grid-template-columns: 1fr 1.03fr;
+  border-radius: 3px;
+  border: 1px solid #dce7df;
+  box-shadow: 0 13px 34px rgba(0, 54, 30, 0.09);
+  overflow: hidden;
+}
+.auth-brand {
+  min-height: 410px;
+  padding: 28px 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  background: linear-gradient(
+    160deg,
+    rgba(0, 68, 39, 0.93),
+    rgba(0, 48, 27, 0.94)
+  );
+}
+.auth-insignia {
+  display: none;
+}
+.auth-brand .eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: #d6b953;
+  margin-top: 5px;
+}
+.auth-brand h1 {
+  font-family: Georgia, serif;
+  font-size: 23px;
+  line-height: 1.23;
+  letter-spacing: -0.5px;
+  font-weight: 600;
+  margin: 7px 0 13px;
+  color: #fff;
+}
+.auth-brand > p:not(.eyebrow) {
+  font-size: 12px;
+  line-height: 1.65;
+  color: #d8eae0;
+  margin: 0;
+}
+.auth-points {
+  margin-top: auto;
+  gap: 11px;
+  font-size: 11px;
+  color: #ecf5ee;
+}
+.auth-card {
+  padding: 30px 32px;
+  max-height: min(76vh, 720px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cddcd2 transparent;
+}
+.auth-card > .eyebrow {
+  display: none;
+}
+.auth-card h2 {
+  font-family: Georgia, serif;
+  color: #005333;
+  font-size: 22px;
+  letter-spacing: -0.45px;
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 10px 0 5px;
+}
+.auth-card .subtitle {
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+.auth-toggle {
+  margin: 12px 0;
+  background: #edf3ee;
+  padding: 3px;
+  border-radius: 7px;
+}
+.auth-toggle button {
+  padding: 8px 10px;
+  font-size: 11px;
+  border-radius: 5px;
+}
+.auth-card label {
+  font-size: 10.5px;
+  font-weight: 650;
+  margin: 10px 0 5px;
+}
+.auth-card input,
+.auth-card select {
+  padding: 9px 11px;
+  font-size: 11.5px;
+  border-radius: 6px;
+  min-height: 35px;
+}
+.auth-card .primary.full {
+  padding: 10px;
+  margin-top: 16px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+.auth-card .auth-footer {
+  margin-top: 14px;
+  padding-top: 12px;
+  font-size: 10px;
+}
+.auth-card .field-note {
+  font-size: 10px;
+}
+.auth-card .form-status {
+  font-size: 11px;
+  min-height: 0;
+}
+.auth-card .password-eye {
+  font-size: 11px;
+}
+@media (min-width: 820px) and (max-height: 650px) {
+  .auth-shell {
+    margin: 62px auto 18px;
+  }
+  .auth-card {
+    max-height: calc(100vh - 95px);
+  }
+}
+@media (max-width: 680px) {
+  .auth-top {
+    position: static;
+    padding: 12px 20px;
+    background: #f8f7f2;
+  }
+  .auth-shell {
+    width: min(480px, calc(100% - 30px));
+    grid-template-columns: 1fr;
+    margin: 22px auto;
+  }
+  .auth-brand {
+    display: none;
+  }
+  .auth-card {
+    max-height: none;
+    padding: 25px 22px;
+  }
+}

@@ -1,0 +1,33 @@
+.author-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+.author-rows {
+  display: grid;
+  gap: 10px;
+}
+.author-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.author-row input {
+  min-width: 0;
+  flex: 1;
+}
+.author-row button {
+  flex: none;
+}
+@media (max-width: 540px) {
+  .author-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .author-row {
+    align-items: stretch;
+  }
+}

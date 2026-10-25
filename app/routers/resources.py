@@ -1,5 +1,6 @@
 import logging
-from typing import Annotated
+from typing import Annotated, Literal
+from sqlalchemy import select, delete
 
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Query, Request, Response
 from sqlalchemy.exc import IntegrityError
@@ -7,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.user import User
+from app.models.resource import Resource, ResourceFile
 from app.schemas.resource import(
     ResourceCreateRequest,
     ResourceResponse,
@@ -26,6 +28,8 @@ from app.services.resource_service import (
 from app.services.storage_service import (
     upload_and_register_resource_file,
     MAX_FILE_SIZE_BYTES,
+    supabase,
+    BUCKET_NAME
 )
 from app.services.catalogue_service import (
     list_catalogue_resources,
@@ -122,6 +126,11 @@ def upload_resource_file_endpoint(
     except HTTPException:
         raise
     except Exception as exc:
+        logger.exception(
+            "Resource PDF upload failed for resource_id=%s",
+            resource_id,
+        )
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Unable to upload the resource file.",
@@ -285,6 +294,7 @@ def list_library_resources(
         User, Depends(get_current_user)
     ],
     search: Annotated[str | None, Query(max_length=200)] = None,
+    search_field: Annotated[Literal["all", "title", "author", "isbn", "doi", "abstract"], Query()] = "all",
     resource_type: Annotated[str | None, Query()] = None,
     category_id: Annotated[int | None, Query(gt=0)] = None,
     department_id: Annotated[int | None, Query(gt=0)] = None,
@@ -302,6 +312,7 @@ def list_library_resources(
         db,
         can_manage=can_manage,
         search=search,
+        search_field=search_field,
         resource_type=resource_type,
         category_id=category_id,
         department_id=department_id,
@@ -449,3 +460,43 @@ def download_library_resource(
         request,
         "download",
     )
+
+@router.delete("/{resource_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_archived_resource(
+    resource_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_roles("librarian"))],
+):
+    """Permanently delete an archived resource only when it has no dependent records."""
+    resource = db.query(Resource).filter(Resource.id == resource_id).with_for_update().one_or_none()
+    if resource is None:
+        raise HTTPException(status_code=404, detail="Resource not found.")
+    if not resource.is_archived:
+        raise HTTPException(status_code=409, detail="Archive the resource before permanently deleting it.")
+    files = db.scalars(select(ResourceFile).where(ResourceFile.resource_id == resource_id)).all()
+    paths = [f.storage_path for f in files if f.storage_path]
+    try:
+        for f in files:
+            db.delete(f)
+        db.flush()
+        db.delete(resource)
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="Cannot delete this resource: it is referenced by reading history, lists, reports or other records.",
+        ) from exc
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to delete archived resource %s", resource_id)
+        raise HTTPException(status_code=500, detail="Resource deletion failed.")
+
+    # Delete private objects only after the database transaction succeeds.
+    # Failures are logged for later cleanup; do not misrepresent database state.
+    for path in paths:
+        try:
+            supabase.storage.from_(BUCKET_NAME).remove([path])
+        except Exception:
+            logger.exception("Orphaned storage object following resource deletion for resource %s", resource_id)
+    return Response(status_code=204)

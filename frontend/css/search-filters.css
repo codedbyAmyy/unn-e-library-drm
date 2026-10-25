@@ -1,0 +1,112 @@
+/* Keep field-selection controls legible on every viewport. */
+.search-field-select {
+  min-width: 132px;
+  max-width: 210px;
+  background: #fff;
+}
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: stretch;
+}
+.search-form input[type="search"] {
+  flex: 1 1 250px;
+  min-width: 180px;
+}
+.manage-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.manage-toolbar input[type="search"] {
+  flex: 1 1 260px;
+  min-width: 180px;
+}
+@media (max-width: 640px) {
+  .search-field-select {
+    max-width: none;
+    flex: 1 1 150px;
+  }
+  .search-form button {
+    flex: 1 1 120px;
+  }
+}
+
+/* ==========================================
+   Responsive Library Search Bar
+   ========================================== */
+
+.search-form {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 165px auto;
+  gap: 12px;
+  align-items: center !important;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.search-form > input,
+.search-form > select,
+.search-form > button {
+  box-sizing: border-box;
+  width: 100%;
+  height: 46px !important;
+  min-height: 46px;
+  max-height: 46px;
+  margin: 0 !important;
+  padding: 10px 14px;
+  font-size: 14px;
+  line-height: 22px;
+  align-self: center;
+}
+
+.search-form > input {
+  min-width: 0 !important;
+}
+
+.search-form > .search-field-select {
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+.search-form > button {
+  width: auto;
+  min-width: 95px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* Tablets and smaller dashboard widths */
+@media (max-width: 900px) {
+  .search-form {
+    grid-template-columns: minmax(0, 1fr) 145px;
+  }
+
+  .search-form > button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
+/* Phones and narrow split-screen windows */
+@media (max-width: 560px) {
+  .search-form {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .search-form > input,
+  .search-form > select,
+  .search-form > button {
+    width: 100%;
+    height: 44px !important;
+    min-height: 44px;
+    max-height: 44px;
+  }
+
+  .search-form > button {
+    grid-column: auto;
+  }
+}

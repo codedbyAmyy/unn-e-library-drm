@@ -9,6 +9,7 @@ from app.routers.reading_lists import router as reading_lists_router
 from app.routers.admin import router as admin_router
 from app.routers.reports import router as reports_router
 from app.routers.personalization import router as personalization_router
+from app.routers.reading_progress import router as reading_progress_router
 
 app = FastAPI(
     title="UNN E-Library API",
@@ -33,6 +34,7 @@ app.include_router(reading_lists_router)
 app.include_router(admin_router)
 app.include_router(reports_router)
 app.include_router(personalization_router)
+app.include_router(reading_progress_router)
 
 @app.get("/")
 def root():

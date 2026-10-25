@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.models.academic import Course, Department
-from app.models.resource import Category, Resource
+from app.models.resource import Category, Resource, ResourceAuthor
 from app.schemas.resource import (
     ResourceCreateRequest,
     ResourceUpdateRequest,
@@ -16,6 +16,7 @@ def create_resource(
 ) -> Resource:
     """Validate references and create an unpublished library resource"""
     data = resource_data.model_dump()
+    author_names = data.pop("authors", [])
     
     #Validate the category
     if data["category_id"] is not None: 
@@ -49,6 +50,13 @@ def create_resource(
         is_published=False,
         is_featured=False,
     )
+    resource.authors = [
+        ResourceAuthor(
+            author_name=name,
+            author_order=index,
+        )
+        for index, name in enumerate(author_names, start=1)
+    ]
     try:
         db.add(resource)
         db.commit()
@@ -71,6 +79,7 @@ def update_resource(
         raise ValueError("Resource not found.")
 
     data = resource_data.model_dump(exclude_unset=True)
+    author_names = data.pop("authors", None)
 
     # Validate the category, if supplied.
     if "category_id" in data and data["category_id"] is not None:
@@ -114,6 +123,24 @@ def update_resource(
     try:
         for field, value in data.items():
             setattr(resource, field, value)
+
+        if author_names is not None:
+            resource.authors.clear()
+
+            # Remove previous author relationships before inserting
+            # replacements, avoiding uniqueness conflicts.
+            db.flush()
+
+            resource.authors = [
+                ResourceAuthor(
+                    author_name=name,
+                    author_order=index,
+                )
+                for index, name in enumerate(
+                    author_names,
+                    start=1,
+                )
+            ]
 
         db.commit()
         db.refresh(resource)

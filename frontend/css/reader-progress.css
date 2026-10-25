@@ -1,0 +1,129 @@
+*{box-sizing:border-box}
+body{margin:0;font:15px system-ui,-apple-system,Segoe UI,sans-serif;color:#193b30;background:#edece8}
+.reader-header{display:flex;gap:18px;align-items:center;flex-wrap:wrap;padding:13px 24px;background:#063e30;color:white;min-height:60px}
+.reader-header strong{white-space:nowrap}
+#resource-name{font-weight:500;overflow:hidden;text-overflow:ellipsis;max-width:42ch;white-space:nowrap}
+.reader-header-actions{display:flex;align-items:center;gap:18px;margin-left:auto;flex-wrap:wrap}
+.reader-header a{color:white}
+main{margin:0 auto;max-width:1280px;padding:16px}
+#reader-state{min-height:22px;margin-bottom:4px;color:#596b61}
+#reader-state:empty{min-height:0;margin:0}
+#reader-state.reader-error{color:#9b3e29;font-weight:500}
+#reader-controls{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;margin:10px auto}
+#reader-controls[hidden]{display:none}
+button{padding:9px 14px;background:#0e583e;color:white;border:0;border-radius:7px;cursor:pointer;font:inherit;transition:background .15s,transform .15s}
+button:not(:disabled):hover{background:#087450}
+button:not(:disabled):active{transform:translateY(1px)}
+button:disabled{opacity:.4;cursor:default}
+.reader-download{background:#eaf7ee;color:#06432e;font-size:13px;font-weight:650}
+.reader-download:not(:disabled):hover{background:#d2efd9}
+input{width:80px;padding:7px;border:1px solid #bbc6bd;border-radius:5px;font:inherit}
+#progress-track{height:6px;max-width:1250px;margin:12px auto 18px;background:#d0ded5;border-radius:6px;overflow:hidden}
+#progress-fill{height:100%;width:0;background:#146b47;transition:width .25s ease}
+#pdf-stage{position:relative;display:flex;justify-content:center;align-items:flex-start;min-height:360px;overflow:auto;padding:12px 4px 35px}
+#pdf-canvas{max-width:100%;background:white;box-shadow:0 5px 28px #0002}
+.reader-loading{position:absolute;z-index:2;inset:0;min-height:290px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px;background:rgba(237,236,232,.95);color:#104b38}
+.reader-loading[hidden]{display:none!important}
+.reader-loading strong{font-size:17px}
+#reader-loading-detail{font-size:13px;color:#596d61;max-width:36ch;line-height:1.5}
+.reader-spinner{display:block;width:44px;height:44px;border:4px solid #ccdfd3;border-top-color:#0c7350;border-right-color:#0c7350;border-radius:50%;animation:reader-spin .8s linear infinite}
+@keyframes reader-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.reader-spinner{animation:none;border-color:#0c7350 #ccdfd3 #ccdfd3 #ccdfd3}}
+.reading-progress-track{height:6px;background:#d8e4da;border-radius:5px}
+.reading-progress-fill{height:100%;background:#166c49;border-radius:5px}
+@media(max-width:700px){.reader-header{padding:14px;gap:9px}.reader-header-actions{width:100%;margin-left:0;justify-content:space-between}main{padding:12px}#reader-controls{gap:8px}#resource-name{max-width:100%}}
+
+/* Zoom controls: keep page layout readable without clipping scaled PDFs. */
+.reader-zoom{display:inline-flex;align-items:center;gap:5px;background:#dce9e0;padding:4px;border-radius:9px}
+.reader-zoom button{min-width:36px;padding:7px 10px;font-weight:650}
+#zoom-label{min-width:52px;text-align:center;font-variant-numeric:tabular-nums;font-weight:700}
+#zoom-reset{font-size:13px;white-space:nowrap}
+#pdf-stage{justify-content:safe center;overflow-x:auto;overscroll-behavior-x:contain}
+#pdf-canvas{max-width:none;flex:none}
+@media(max-width:700px){.reader-zoom{order:3;width:100%;justify-content:center}}
+
+/* =========================================
+   RESPONSIVE PROTECTED PDF READER
+   ========================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+/* Keep the PDF within the available screen width */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Allow the document itself to scroll when zoomed in */
+#pdf-container,
+.reader-document,
+.reader-canvas-container {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Prevent PDF canvases from stretching surrounding layout */
+#pdf-canvas,
+.reader-canvas,
+canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+}
+
+/* Prevent crowded toolbars */
+.reader-toolbar,
+.reader-controls,
+.reader-navigation,
+.reader-zoom-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.reader-toolbar button,
+.reader-controls button,
+.reader-navigation button,
+.reader-zoom-controls button {
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+/* Smaller windows and mobile screens */
+@media (max-width: 600px) {
+  .reader-toolbar,
+  .reader-controls,
+  .reader-navigation {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .reader-toolbar button,
+  .reader-controls button,
+  .reader-navigation button {
+    font-size: 13px;
+    padding: 9px 12px;
+  }
+
+  .reader-zoom-controls {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .reader-zoom-controls button {
+    min-width: 38px;
+  }
+
+  #pdf-container,
+  .reader-document,
+  .reader-canvas-container {
+    width: 100%;
+  }
+}

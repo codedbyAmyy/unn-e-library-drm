@@ -1,0 +1,86 @@
+/* Shared refinements — Figma-aligned interaction and layout polish */
+:root {
+  scrollbar-color: #b6cbbd transparent;
+  scrollbar-width: thin;
+}
+body {
+  scrollbar-color: #b6cbbd transparent;
+  scrollbar-width: thin;
+}
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #d1e1d6 transparent;
+}
+.main-area {
+  min-width: 0;
+}
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  box-shadow: 0 2px 12px rgba(0, 40, 20, 0.04);
+}
+.topbar-title .eyebrow {
+  display: none;
+}
+.sidebar-brand {
+  justify-content: space-between;
+  align-items: center;
+}
+.sidebar-close {
+  border: 0;
+  background: transparent;
+  font-size: 28px;
+  line-height: 1;
+  color: #006b3f;
+  padding: 4px 10px;
+  display: none;
+}
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.history-entry {
+  background: #fff;
+  border: 1px solid #e5eae6;
+  border-radius: 14px;
+  padding: 22px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.history-entry h3 {
+  font-size: 17px;
+  margin: 0;
+}
+.history-entry .card-actions {
+  margin-top: 4px;
+}
+.history-progress-label {
+  color: #67786c;
+  font-size: 12px;
+  margin: 0;
+}
+/* Reserve honest progress display until page counts are persisted. */
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    height: 100vh;
+    z-index: 40;
+  }
+  .sidebar-close {
+    display: inline-flex;
+  }
+}
+@media (max-width: 620px) {
+  .history-entry {
+    padding: 18px;
+  }
+}

@@ -10,7 +10,7 @@ from app.database import get_db
 from app.models.user import User
 from app.utils.tokens import decode_access_token
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],

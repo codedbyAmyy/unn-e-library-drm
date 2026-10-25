@@ -22,6 +22,7 @@ class ResourceCreateRequest(BaseModel):
     resource_type: ResourceType
     publication_year: int | None = Field(default=None, ge=1000, le=9999)
     publisher: str | None = Field(default=None, max_length=200)
+    authors: list[str] = Field(default_factory=list, max_length=20)
     isbn: str | None = Field(default=None, max_length=20)
     doi: str | None = Field(default=None, max_length=100)
     language: str | None = Field(default="English",min_length=1,max_length=50)
@@ -49,6 +50,29 @@ class ResourceCreateRequest(BaseModel):
         if not value:
             raise ValueError("This field cannot be blank.") 
         return value
+    
+    @field_validator("authors")
+    @classmethod
+    def validate_authors(cls, value: list[str]) -> list[str]:
+        cleaned = []
+        seen = set()
+
+        for name in value:
+            name = name.strip()
+
+            if not name or len(name) > 200:
+                raise ValueError(
+                    "Each author must have a name of 1–200 characters."
+                )
+
+            key = name.casefold()
+            if key in seen:
+                raise ValueError("Duplicate authors are not allowed.")
+
+            seen.add(key)
+            cleaned.append(name)
+
+        return cleaned
 
 class ResourceUpdateRequest(BaseModel):
     """Validate partial updates to an existing library resource."""
@@ -58,6 +82,7 @@ class ResourceUpdateRequest(BaseModel):
     resource_type: ResourceType | None = None
     publication_year: int | None = Field(default=None, ge=1000, le=9999)
     publisher: str | None = Field(default=None, max_length=200)
+    authors: list[str] = Field(default_factory=list, max_length=20)
     isbn: str | None = Field(default=None, max_length=20)
     doi: str | None = Field(default=None, max_length=100)
     language: str | None = Field(default=None, min_length=1, max_length=50)
@@ -85,6 +110,29 @@ class ResourceUpdateRequest(BaseModel):
         if value is not None and not value:
             raise ValueError("This field cannot be blank.")
         return value
+    
+    @field_validator("authors")
+    @classmethod
+    def validate_authors(cls, value: list[str]) -> list[str]:
+        cleaned = []
+        seen = set()
+
+        for name in value:
+            name = name.strip()
+
+            if not name or len(name) > 200:
+                raise ValueError(
+                    "Each author must have a name of 1–200 characters."
+                )
+
+            key = name.casefold()
+            if key in seen:
+                raise ValueError("Duplicate authors are not allowed.")
+
+            seen.add(key)
+            cleaned.append(name)
+
+        return cleaned
 
 class ResourceResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -107,6 +155,22 @@ class ResourceResponse(BaseModel):
     is_archived: bool
     archived_at: datetime | None
     
+    authors: list[str] = Field(default_factory=list)
+
+    @field_validator("authors", mode="before")
+    @classmethod
+    def serialize_authors(cls, value):
+        if not value:
+            return []
+
+        return [
+            author.author_name
+            for author in sorted(
+                value,
+                key=lambda author: (author.author_order, author.id),
+            )
+        ]
+        
 
 class ResourceListResponse(BaseModel):
     total: int
