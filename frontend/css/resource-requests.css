@@ -1,0 +1,22 @@
+.request-create-form {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;max-width:850px;}
+.request-field {display:flex;flex-direction:column;gap:7px;min-width:0;color:inherit;font-size:.88rem;font-weight:600;}
+.request-field .field-input {width:100%;min-width:0;box-sizing:border-box;min-height:43px;font-weight:400;}
+.request-field:has(textarea),.request-create-form>.request-feedback,.request-create-form>button {grid-column:1/-1;}
+.request-create-form>button{justify-self:start;}
+.request-filters{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:14px 0 20px;}
+.request-filters .request-field{width:min(250px,100%);}
+.request-list{display:grid;gap:14px;}
+.request-record{border:1px solid #dde7df;border-radius:14px;padding:18px;background:var(--surface,#fff);min-width:0;}
+.request-record-top{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px;}
+.request-record-top h3{margin:0;font-size:1.02rem;overflow-wrap:anywhere;}
+.request-details{display:grid;grid-template-columns:minmax(100px,145px) minmax(0,1fr);gap:7px 14px;margin:0 0 12px;font-size:.86rem;}
+.request-details dt{color:#65736a;font-weight:600;}
+.request-details dd{margin:0;overflow-wrap:anywhere;}
+.request-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+.request-status{display:inline-flex;align-items:center;border-radius:20px;background:#e7eee8;color:#24543a;padding:5px 11px;font-size:.74rem;font-weight:700;white-space:nowrap;}
+.request-status--rejected,.request-status--cancelled{background:#f7e8e7;color:#8d302d;}
+.request-status--pending{background:#fff0cf;color:#805a15;}
+.request-status--fulfilled{background:#ddf0e4;color:#16633f;}
+.request-review{display:grid;gap:12px;padding:15px;margin-top:15px;border-radius:12px;background:#f6f8f4;}
+.request-feedback{font-size:.84rem;min-height:1em;overflow-wrap:anywhere;}
+@media(max-width:650px){.request-create-form{grid-template-columns:1fr;}.request-details{grid-template-columns:1fr;gap:3px;}.request-details dt:not(:first-child){margin-top:7px;}.request-record{padding:14px;}.request-actions>button{max-width:100%;}}

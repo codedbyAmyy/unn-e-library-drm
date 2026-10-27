@@ -1,0 +1,19 @@
+/* Course reading lists — isolated from dashboard and PDF reader styles */
+.crl-toolbar,.crl-actions,.crl-pagination{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.crl-toolbar input,.crl-toolbar select{flex:1 1 180px;min-width:0;max-width:330px}
+.crl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px}
+.crl-card,.crl-item{border:1px solid #dce6df;background:#fff;border-radius:14px;padding:17px;min-width:0}
+.crl-card h3,.crl-item h3{margin:0 0 8px;color:#153f30;font-size:1.1rem}
+.crl-muted{color:#617267;font-size:.92rem;line-height:1.5}
+.crl-badge{display:inline-block;font-size:.77rem;padding:5px 10px;border-radius:99px;background:#e9f5ee;color:#174d36;font-weight:700}
+.crl-badge.draft{background:#f6efe0;color:#775c22}
+.crl-items{display:grid;gap:12px;margin:18px 0}
+.crl-form{display:grid;gap:12px;margin:16px 0;max-width:660px}
+.crl-field{display:grid;gap:5px;font-weight:600;color:#2b4437}
+.crl-field input,.crl-field textarea{width:100%;box-sizing:border-box;min-height:44px;border:1px solid #cbd9cf;border-radius:9px;padding:10px 12px;font:inherit}
+.crl-field textarea{min-height:85px}
+.crl-check{display:flex;gap:9px;align-items:center}
+.crl-feedback{min-height:20px;color:#174d36}
+.crl-error{color:#a43521}
+.crl-actions button,.crl-pagination button,.crl-form button,.crl-toolbar button{min-height:40px}
+@media(max-width:540px){.crl-toolbar>*{flex:1 1 100%;max-width:none!important}.crl-actions button{flex:1 1 auto}.crl-grid{grid-template-columns:1fr}}

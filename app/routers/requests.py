@@ -74,7 +74,7 @@ def get_resource_requests(
     items, total =list_requests(
         db,
         user_id=user.id,
-        is_librarian=user.role in ("librarian, admin"),
+        is_librarian=user.role in ("librarian", "admin"),
         status_filter=status_filter,
         limit=limit,
         offset=offset,

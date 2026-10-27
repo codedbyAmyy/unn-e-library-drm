@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     SMTP_FROM_EMAIL: str = ""
     SMTP_USE_TLS: bool = True
+    FRONTEND_PUBLIC_URL: str = ""
+    EMAIL_TRANSPORT: str = "smtp"
+    RESEND_API_KEY: str = ""
+    RESEND_FROM_EMAIL: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",

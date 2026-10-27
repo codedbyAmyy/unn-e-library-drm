@@ -62,7 +62,24 @@ class UserResponse(BaseModel):
     academic_level: int | None
     created_at: datetime
 
-class ProfileUpdateRequest(BaseModel):
-    model_config = ConfigDict(extra="ignore")
 
-    full_name: str = Field(min_length=2, max_length=100)
+class ProfileUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    full_name: str | None = Field(
+        default=None, min_length=2, max_length=100
+    )
+    department_id: int | None = Field(default=None, gt=0)
+    academic_level: int | None = None
+
+    @field_validator("academic_level")
+    @classmethod
+    def validate_level(cls, value: int | None) -> int | None:
+        if value is not None and value not in (
+            100, 200, 300, 400, 500, 600
+        ):
+            raise ValueError(
+                "Academic level must be 100, 200, 300, "
+                "400, 500, or 600."
+            )
+        return value

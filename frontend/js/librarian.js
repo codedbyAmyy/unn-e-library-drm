@@ -396,6 +396,7 @@ function resourceDetails(resource, isLibrarian, reload) {
 
 export async function showLibrarianResources({ user, content }) {
   const isLibrarian = user.role === "librarian";
+  content.classList.add("unn-resource-management");
   const canView = isLibrarian || user.role === "admin";
   if (!canView) {
     content.append(node("p", "error-state", "Not authorized."));
@@ -478,6 +479,29 @@ export async function showLibrarianResources({ user, content }) {
       load();
     }
   });
+  
+function deleteResource(resource) {
+  openDialog({
+    heading: "Permanently delete resource?",
+    explanation:
+      `"${resource.title}" will be permanently deleted. ` +
+      "This action cannot be undone.",
+    confirmText: "Delete Permanently",
+    danger: true,
+
+    onConfirm: async () => {
+      await apiRequest(`/resources/${resource.id}`, {
+        method: "DELETE",
+      });
+
+      await load();
+
+      feedback.textContent =
+        "Resource permanently deleted.";
+    },
+  });
+}
+
   function mutate(resource, verb) {
     const prompts = {
       publish: [
@@ -532,9 +556,33 @@ export async function showLibrarianResources({ user, content }) {
   }
   async function load() {
     collection.replaceChildren();
+    const tableHeader = node("div", "unn-resource-table-header");
+
+    for (const title of [
+      "Resource",
+      "Author",
+      "Department",
+      "Status",
+      "Actions",
+    ]) {
+      tableHeader.append(node("span", "", title));
+    }
+
+    collection.append(tableHeader);
     pager.replaceChildren();
     feedback.textContent = "Loading resources...";
     try {
+      // Get department names for the resource table.
+      let departments = [];
+
+      try {
+        const result = await apiRequest("/academic/departments");
+        departments = Array.isArray(result)
+          ? result
+          : result.items || [];
+      } catch {
+        // Continue displaying resources if the lookup fails.
+      }
       const p = new URLSearchParams({
         limit: String(limit),
         offset: String(offset),
@@ -563,7 +611,7 @@ export async function showLibrarianResources({ user, content }) {
           node(
             "p",
             "",
-            `${(r.resource_type || "resource").replaceAll("_", " ")}${r.publication_year ? " · " + r.publication_year : ""} · Resource #${r.id}`,
+            `${(r.resource_type || "resource").replaceAll("_", " ")}${r.publication_year ? " · " + r.publication_year : ""}`,
           ),
         );
         const tag = node(
@@ -580,11 +628,13 @@ export async function showLibrarianResources({ user, content }) {
           ),
         );
         if (isLibrarian) {
-          if (r.is_archived)
-            actions.append(
-              action("Restore", () => mutate(r, "unarchive"), true),
-            );
-          else if (r.is_published)
+            if (r.is_archived) {
+              actions.append(
+                action("Restore", () => mutate(r, "unarchive"), true),
+                action("Delete", () => deleteResource(r), true),
+              );
+            } else if (r.is_published)
+
             actions.append(
               action("Unpublish", () => mutate(r, "unpublish"), true),
               action("Archive", () => mutate(r, "archive"), true),
@@ -596,6 +646,57 @@ export async function showLibrarianResources({ user, content }) {
             );
         }
         row.append(info, tag, actions);
+        const author = node(
+          "span",
+          "unn-resource-author",
+          (r.authors || []).join(", ") || "—",
+        );
+
+        const department = departments.find(
+          (d) => Number(d.id) === Number(r.department_id),
+        );
+
+        const departmentName = node(
+          "span",
+          "unn-resource-department",
+          department?.name || "—",
+        );
+        
+        for (const btn of actions.querySelectorAll("button")) {
+          if (btn.classList.contains("unn-icon-action")) continue;
+
+          const label = btn.textContent.trim();
+
+          const icons = {
+            "View Details": "◉",
+            "Publish": "↑",
+            "Unpublish": "↓",
+            "Archive": "▣",
+            "Restore": "↶",
+            "Delete": "✕",
+          };
+
+          btn.classList.add("unn-icon-action");
+
+          // Show the action name when hovering.
+          btn.title = label;
+
+          // Let screen readers identify the action.
+          btn.setAttribute("aria-label", label);
+
+          const icon = document.createElement("span");
+          icon.className = "unn-action-icon";
+          icon.setAttribute("aria-hidden", "true");
+          icon.textContent = icons[label] || "•";
+
+          const text = document.createElement("span");
+          text.className = "unn-action-text";
+          text.textContent = label;
+
+          btn.replaceChildren(icon, text);
+        }
+
+        row.append(info, author, departmentName, tag, actions);
         collection.append(row);
       }
       const prev = action(
@@ -681,10 +782,54 @@ function openUploadModal(onComplete) {
   const doi = field("DOI", "text", false, 100);
   const catId = field("Category ID (optional)", "number");
   catId.min = "1";
-  const depId = field("Department ID (optional)", "number");
-  depId.min = "1";
-  const courseId = field("Course ID (optional)", "number");
-  courseId.min = "1";
+  // Academic names are shown to librarians; API IDs remain internal.
+  function academicSelect(labelText) {
+    const wrap = node("label", "upload-field");
+    wrap.append(node("span", "", labelText));
+    const select = node("select", "field-input");
+    const placeholder = node("option", "", "Loading options…");
+    placeholder.value = "";
+    select.append(placeholder);
+    wrap.append(select);
+    fields.append(wrap);
+    return select;
+  }
+  const depId = academicSelect("Department (optional)");
+  const courseId = academicSelect("Course (optional)");
+  function putOptions(select, rows, description) {
+    select.replaceChildren();
+    const empty = node("option", "", description);
+    empty.value = "";
+    select.append(empty);
+    for (const item of rows) {
+      const opt = node("option", "", item.label);
+      opt.value = String(item.id);
+      select.append(opt);
+    }
+  }
+  async function loadCourses() {
+    courseId.disabled = true;
+    putOptions(courseId, [], "Loading courses…");
+    try {
+      const query = depId.value ? `?department_id=${depId.value}` : "";
+      const rows = await apiRequest(`/academic/courses${query}`);
+      putOptions(courseId, rows.map(x => ({id:x.id,label:`${x.course_code} — ${x.title}`})), "No course selected");
+      courseId.disabled = false;
+    } catch (err) {
+      putOptions(courseId, [], "Courses unavailable — refresh");
+    }
+  }
+  depId.addEventListener("change", () => void loadCourses());
+  void (async () => {
+    try {
+      const rows = await apiRequest("/academic/departments");
+      putOptions(depId, rows.map(x => ({id:x.id,label:`${x.name} (${x.code})`})), "No department selected");
+      await loadCourses();
+    } catch (err) {
+      putOptions(depId, [], "Departments unavailable — refresh");
+      putOptions(courseId, [], "Courses unavailable — refresh");
+    }
+  })();
   const description = node("label", "upload-field full");
   description.append(node("span", "", "Abstract / description"));
   const abstract = node("textarea", "field-input");

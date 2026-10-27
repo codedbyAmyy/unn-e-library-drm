@@ -1,0 +1,7 @@
+/* Saved-resource controls use the existing UNN E-Library button system. */
+.bookmark-control { display: inline-flex; align-items: center; max-width: 100%; }
+.bookmark-toggle { min-height: 40px; white-space: normal; text-align: center; }
+.bookmark-toggle[aria-pressed="true"] { color: #17553c; font-weight: 700; }
+.card-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+@media(max-width: 560px) { .bookmark-control, .bookmark-toggle { width: 100%; } }

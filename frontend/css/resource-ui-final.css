@@ -1,0 +1,41 @@
+/* Final resource management layout: layered over resource-management-refinement.css */
+#content.unn-resource-management .manage-toolbar{
+ display:grid!important;grid-template-columns:minmax(170px,2.4fr) minmax(128px,1fr) auto minmax(130px,1fr) auto;
+ gap:10px!important;align-items:center;padding:12px 14px;
+}
+#content.unn-resource-management .manage-toolbar>*{min-width:0!important;width:100%!important;max-width:100%;margin:0!important;box-sizing:border-box;}
+#content.unn-resource-management .manage-toolbar>button{width:auto!important;min-height:42px;white-space:nowrap;padding:10px 15px!important;}
+#content.unn-resource-management .manage-toolbar input,#content.unn-resource-management .manage-toolbar select{min-height:42px;}
+#content.unn-resource-management .manage-collection{width:100%;max-width:100%;overflow-x:auto!important;overflow-y:visible;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;}
+#content.unn-resource-management .unn-resource-table-header,
+#content.unn-resource-management .manage-resource-row{
+ box-sizing:border-box;min-width:930px!important;
+ grid-template-columns:minmax(205px,2fr) minmax(135px,1.1fr) minmax(128px,1fr) 105px minmax(200px,1.45fr)!important;
+ gap:14px!important;align-items:center;
+}
+#content.unn-resource-management .manage-row-actions{display:flex!important;flex-wrap:nowrap!important;align-items:center;justify-content:flex-start;gap:7px!important;min-width:0;}
+#content.unn-resource-management .manage-row-actions button{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:0 0 auto;min-height:36px;padding:7px 9px!important;max-width:100%;}
+#content.unn-resource-management .manage-row-actions .unn-action-icon{display:none;font-size:17px;line-height:1;}
+#content.unn-resource-management .manage-row-actions .unn-action-text{white-space:nowrap;}
+@media(max-width:1480px){
+ #content.unn-resource-management .manage-row-actions button.unn-icon-action{width:38px!important;height:38px!important;min-height:38px;padding:0!important;border-radius:9px!important;}
+ #content.unn-resource-management .manage-row-actions .unn-action-icon{display:inline-block;}
+ #content.unn-resource-management .manage-row-actions .unn-action-text{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden;white-space:nowrap;}
+ #content.unn-resource-management .unn-resource-table-header,#content.unn-resource-management .manage-resource-row{grid-template-columns:minmax(205px,2fr) minmax(135px,1.1fr) minmax(128px,1fr) 105px 205px!important;}
+}
+@media(max-width:1160px){
+ #content.unn-resource-management .manage-toolbar{grid-template-columns:minmax(180px,2fr) minmax(130px,1fr) auto;}
+ #content.unn-resource-management .manage-toolbar>*:nth-child(4){grid-column:1/3;}
+ #content.unn-resource-management .manage-toolbar>*:nth-child(5){grid-column:3;}
+}
+@media(max-width:680px){
+ #content.unn-resource-management .manage-toolbar{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px!important;}
+ #content.unn-resource-management .manage-toolbar>*:first-child{grid-column:1/-1;}
+ #content.unn-resource-management .manage-toolbar>*:nth-child(4){grid-column:1;grid-row:auto;}
+ #content.unn-resource-management .manage-toolbar>*:nth-child(5){grid-column:2;grid-row:auto;}
+ #content.unn-resource-management .manage-toolbar>button{width:100%!important;}
+ #content.unn-resource-management .manage-collection:before{content:'Swipe sideways to see all columns and actions →';display:block;font-size:12px;color:#52695f;padding:9px 12px;background:#f4faf6;position:sticky;left:0;width:max-content;}
+}
+/* Detail page actions: adjacent siblings must not visually fuse. */
+#content .details-grid ~ button{margin:7px 10px 7px 0!important;min-height:42px;border-radius:9px!important;padding:10px 16px!important;vertical-align:middle;}
+#content .details-grid ~ button:focus-visible{outline:3px solid #80c7a5;outline-offset:2px;}

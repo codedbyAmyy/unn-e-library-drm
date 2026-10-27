@@ -154,6 +154,7 @@ class ResourceResponse(BaseModel):
     is_featured: bool
     is_archived: bool
     archived_at: datetime | None
+    created_at: datetime
     
     authors: list[str] = Field(default_factory=list)
 

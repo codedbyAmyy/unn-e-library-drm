@@ -1,6 +1,21 @@
 import { showLibrarianResources } from "./librarian.js";
 import { apiRequest, API_BASE, getToken } from "./api.js";
 import { getCurrentUser, requireLogin, logout } from "./auth.js";
+import { makeBookmarkControl, showMyLibrary } from './bookmarks.js';
+import { showResourceRequests } from './resource-requests.js';
+import { showCourseReadingLists } from './course-reading-lists.js';
+import { showCasNotifications, refreshCasBadge } from "./cas-notifications.js";
+import { showProfileSettings } from "./profile-settings.js";
+import { showLibrarianDashboard } from "./librarian-dashboard.js";
+import { installSelectEnhancer } from "./select-enhancer.js";
+import { showLibrarianRequestsPage } from "./librarian-requests-page.js";
+import { showLibrarianReportsPage } from "./librarian-reports-page.js";
+import { openReportResourceIssue } from "./report-resource-issue.js";
+import { showReadingStatistics } from "./reading-statistics.js";
+import { showAdminDashboard } from "./admin-dashboard.js";
+import { showAdminUserManagement } from "./admin-user-management.js";
+import { showLibraryAnalytics } from "./library-analytics.js";
+import { showAdminNotificationsManagement } from "./admin-notifications-management.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls = "", txt = "") => {
@@ -16,6 +31,7 @@ const roles = {
     ["recommendations", "For You", "✦"],
     ["bookmarks", "My Library", "☆"],
     ["history", "Reading History", "◷"],
+    ["statistics", "Reading Statistics", "▥"],
     ["reading-lists", "Course Reading Lists", "☷"],
     ["requests", "Resource Requests", "✉"],
     ["notifications", "Notifications", "♧"],
@@ -45,6 +61,8 @@ const roles = {
   admin: [
     ["dashboard", "Dashboard", "▦"],
     ["users", "User Management", "♙"],
+    ["analytics", "Library Analytics", "▥"],
+    ["notifications-admin", "Notifications Management", "✉"],
     ["resources-admin", "Resources", "▤"],
     ["library", "Browse Library", "⌕"],
     ["notifications", "Notifications", "♧"],
@@ -62,10 +80,13 @@ const pageNames = {
   library: "Library & Discovery",
   recommendations: "Recommended for You",
   bookmarks: "My Library",
+  analytics: "Library Analytics",
   history: "Reading History",
+  statistics: "Reading Statistics",
   "reading-lists": "Course Reading Lists",
   requests: "Resource Requests",
   notifications: "Notifications",
+  "notifications-admin": "Notifications Management",
   profile: "My Profile",
   "resources-admin": "Manage Resources",
   reports: "Broken Resource Reports",
@@ -169,6 +190,7 @@ function makeCard(r, controls = true) {
     actions.append(
       button("Details", () => showDetails(resourceId(r)), "btn-quiet"),
     );
+    actions.append(makeBookmarkControl(resourceId(r)));
     c.append(actions);
   }
   return c;
@@ -209,6 +231,19 @@ async function showDetails(id) {
     }
     p.append(d);
     p.append(button("Read protected PDF", () => openPdf(id)));
+    p.append(makeBookmarkControl(id));
+    if (
+      state.user.role === "student" ||
+      state.user.role === "lecturer"
+    ) {
+      p.append(
+        button(
+          "Report an Issue",
+          () => openReportResourceIssue(r),
+          "btn-quiet unn-report-issue-button",
+        ),
+      );
+    }
   } catch (e) {
     error(p, e);
   }
@@ -689,7 +724,11 @@ function navigate(page) {
     void render("dashboard");
     return;
   }
-  location.hash = `#${page}`;
+  if (location.hash === `#${page}`) {
+    void render(page);
+  } else {
+    location.hash = `#${page}`;
+  }
 }
 function sidebar() {
   const s = $("sidebar");
@@ -706,6 +745,12 @@ function sidebar() {
   for (const [id, label, icon] of roles[state.user.role] || roles.student) {
     const link = el("a", `nav-item ${state.page === id ? "active" : ""}`);
     link.href = `#${id}`;
+    link.addEventListener("click", (event) => {
+      if (location.hash === `#${id}`) {
+        event.preventDefault();
+        void render(id);
+      }
+    });
     link.append(el("span", "nav-symbol", icon), el("span", "", label));
     if (state.page === id) link.setAttribute("aria-current", "page");
     s.append(link);
@@ -713,6 +758,7 @@ function sidebar() {
   const foot = el("div", "sidebar-footer");
   foot.append(button("↪ Log Out", logout, "nav-item logout"));
   s.append(foot);
+  void refreshCasBadge();
 }
 async function render(name) {
   if (!state.user) return;
@@ -721,6 +767,7 @@ async function render(name) {
   state.page = page;
   sidebar();
   $("content").replaceChildren();
+  $("content").classList.remove("unn-resource-management");
   $("page-title").textContent = pageNames[page] || "Dashboard";
   $("profile-name").textContent = state.user.full_name || "Member";
   $("profile-initial").textContent = (state.user.full_name || "U")
@@ -729,8 +776,20 @@ async function render(name) {
   $("role-label").textContent = state.user.role;
   try {
     switch (page) {
+      
       case "dashboard":
-        await home();
+        if (state.user.role === "librarian") {
+          await showLibrarianDashboard({
+            content: $("content"),
+          });
+        } else if (state.user.role === "admin") {
+          await showAdminDashboard({
+            content: $("content"),
+            user: state.user,
+          });
+        } else {
+          await home();
+        }
         break;
       case "library":
         await library();
@@ -743,45 +802,85 @@ async function render(name) {
         );
         break;
       case "bookmarks":
-        await listSection(
-          "My Library",
-          "Resources you have saved for later.",
-          "/bookmarks",
-        );
+        await showMyLibrary({ content: $("content"), openPdf, showDetails });
         break;
       case "history":
         await history();
         break;
+      case "statistics":
+        await showReadingStatistics({
+          content: $("content"),
+          openPdf,
+          showDetails,
+        });
+        break;
       case "reading-lists":
-        await listSection(
-          "Course Reading Lists",
-          "Explore academic course reading lists.",
-          "/reading-lists",
-          { format: "list" },
-        );
+        await showCourseReadingLists({ user: state.user, content: $("content") });
         break;
       case "requests":
-        await requests();
+        if (state.user.role === "librarian") {
+          await showLibrarianRequestsPage({
+            content: $("content"),
+          });
+        } else {
+          await showResourceRequests({
+            user: state.user,
+            content: $("content"),
+          });
+        }
+        break;
+      case "notifications-admin":
+        await showAdminNotificationsManagement({
+          content: $("content"),
+          user: state.user,
+        });
         break;
       case "notifications":
-        await notices();
+        await showCasNotifications({
+          content: $("content"),
+          onOpenResource: (id) => showDetails(id),
+        });
         break;
       case "profile":
-        profile();
+        await showProfileSettings({
+          content: $("content"),
+          user: state.user,
+          onSaved: (updatedUser) => {
+            state.user = updatedUser;
+            $("profile-name").textContent = updatedUser.full_name;
+            $("profile-initial").textContent =
+              updatedUser.full_name.charAt(0).toUpperCase();
+          },
+        });
         break;
       case "users":
-        await manageUsers();
+        await showAdminUserManagement({
+          content: $("content"),
+          user: state.user,
+        });
+        break;
+      case "analytics":
+        await showLibraryAnalytics({
+          content: $("content"),
+          user: state.user,
+        });
         break;
       case "resources-admin":
         await manageResources();
         break;
       case "reports":
-        await listSection(
-          "Broken Resource Reports",
-          "Reported problems and their current statuses.",
-          "/reports",
-          { format: "list" },
-        );
+        if (state.user.role === "librarian") {
+          await showLibrarianReportsPage({
+            content: $("content"),
+          });
+        } else {
+          await listSection(
+            "Broken Resource Reports",
+            "Reported problems and their current statuses.",
+            "/reports",
+            { format: "list" },
+          );
+        }
         break;
       default:
         await home();
@@ -799,6 +898,7 @@ async function boot() {
   if (!requireLogin()) return;
   try {
     state.user = await getCurrentUser();
+    installSelectEnhancer();
     if (!roles[state.user.role])
       throw Error("Your account role is not recognized.");
     const route = () =>

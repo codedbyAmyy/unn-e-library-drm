@@ -37,3 +37,22 @@ htmlcov/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Local editor and system files
+.vscode/
+.DS_Store
+
+# Temporary files and backups
+*.bak
+*.log

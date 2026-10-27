@@ -1,0 +1,5 @@
+.reader-header-actions{gap:10px!important;}
+.reader-header-actions a.unn-reader-back{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:transparent;color:#fff;text-decoration:none;border:1px solid #c7e3d5;border-radius:9px;padding:10px 15px;min-height:42px;font-size:13px;font-weight:700;transition:background .15s;}
+.reader-header-actions a.unn-reader-back:hover{background:#135c47;color:#fff;}
+.reader-header-actions a.unn-reader-back:focus-visible{outline:3px solid #95d4b6;outline-offset:2px;}
+@media(max-width:550px){.reader-header-actions{justify-content:flex-start!important}.reader-header-actions a.unn-reader-back,.reader-header-actions .reader-download{flex:1 1 175px;text-align:center;white-space:normal;}}

@@ -1,0 +1,7 @@
+
+/* Searchable published-resource picker */
+.crl-search-results{display:grid;gap:10px;max-height:340px;overflow-y:auto;margin:8px 0;}
+.crl-picker-row{border:1px solid #dce9df;border-radius:12px;padding:12px 15px;display:grid;gap:5px;}
+.crl-picker-row strong{font-size:14px;color:#163f2c;}
+.crl-picker-row button{justify-self:start;}
+.crl-picker-row button[aria-pressed="true"]{background:#e2f2e8;border-color:#177246;}

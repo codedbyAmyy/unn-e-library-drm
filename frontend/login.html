@@ -1,172 +1,275 @@
+
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Sign in or Register | UNN E-Library</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="./css/entry.css" />
-  </head>
-  <body class="auth-body">
-    <header class="auth-top">
-      <a class="brand" href="./landing.html">UNN <small>E-LIBRARY</small></a
-      ><a href="./landing.html">← Home</a>
-    </header>
-    <main class="auth-shell">
-      <aside class="auth-brand">
-        <div class="auth-insignia">UNN</div>
-        <p class="eyebrow">UNIVERSITY OF NIGERIA, NSUKKA</p>
-        <h1>One library.<br />Endless possibilities.</h1>
-        <p>
-          Secure access to academic resources and research for the UNN
-          community.
-        </p>
-        <div class="auth-points">
-          <span>✓ Academic discovery</span><span>✓ Protected PDF reading</span
-          ><span>✓ Your personal reading library</span>
-        </div>
-      </aside>
-      <section class="auth-card">
-        <p class="eyebrow">UNN ACADEMIC RESOURCE PORTAL</p>
-        <h2 id="form-title">Welcome back</h2>
-        <p class="subtitle" id="form-subtitle">
-          Sign in to continue to your academic workspace.
-        </p>
-        <div class="auth-toggle" role="tablist" aria-label="Account access">
-          <button
-            type="button"
-            id="sign-in-tab"
-            role="tab"
-            aria-selected="true"
-          >
-            Sign in</button
-          ><button
-            type="button"
-            id="register-tab"
-            role="tab"
-            aria-selected="false"
-          >
-            Register
-          </button>
-        </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Sign in or Register | UNN E-Library</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="./css/entry.css" />
+  <link rel="stylesheet" href="./css/auth-figma.css" />
+</head>
+
+<body class="auth-body">
+
+  <!-- Top Navigation -->
+  <header class="auth-top">
+    <a class="brand" href="./landing.html">
+      UNN <small>E-LIBRARY</small>
+    </a>
+
+    <a href="./landing.html">← Home</a>
+  </header>
+
+  <main class="auth-shell">
+
+    <!-- Left Branding Section -->
+    <aside class="auth-brand">
+      <div class="auth-insignia">UNN</div>
+
+      <p class="eyebrow">UNIVERSITY OF NIGERIA, NSUKKA</p>
+
+      <h1>
+        One library.<br />
+        Endless possibilities.
+      </h1>
+
+      <p>
+        Secure access to academic resources and research for the UNN
+        community.
+      </p>
+
+      <div class="auth-points">
+        <span>✓ Academic discovery</span>
+        <span>✓ Protected PDF reading</span>
+        <span>✓ Your personal reading library</span>
+      </div>
+    </aside>
+
+    <!-- Right Authentication Section -->
+    <section class="auth-card">
+
+      <p class="eyebrow">UNN ACADEMIC RESOURCE PORTAL</p>
+
+      <h2 id="form-title">Welcome back</h2>
+
+      <p class="subtitle" id="form-subtitle">
+        Sign in to continue to your academic workspace.
+      </p>
+
+      <!-- Sign In / Register Tabs -->
+      <div
+        class="auth-toggle"
+        role="tablist"
+        aria-label="Account access"
+      >
+        <button
+          type="button"
+          id="sign-in-tab"
+          role="tab"
+          aria-selected="true"
+        >
+          Sign in
+        </button>
+
+        <button
+          type="button"
+          id="register-tab"
+          role="tab"
+          aria-selected="false"
+        >
+          Register
+        </button>
+      </div>
+
+      <!-- Form Feedback -->
+      <p
+        class="form-status"
+        id="form-status"
+        role="alert"
+        aria-live="polite"
+      ></p>
+
+      <!-- ====================== -->
+      <!-- SIGN IN FORM           -->
+      <!-- ====================== -->
+      <form id="login-form">
+
+        <label for="login-email">Email address</label>
+        <input
+          id="login-email"
+          type="email"
+          autocomplete="username"
+          required
+          placeholder="you@unn.edu.ng"
+        />
+
+        <label for="login-password">Password</label>
+        <input
+          id="login-password"
+          type="password"
+          autocomplete="current-password"
+          required
+          placeholder="Enter your password"
+        />
+
+        <!-- Forgot Password Link -->
         <p
-          class="form-status"
-          id="form-status"
-          role="alert"
-          aria-live="polite"
-        ></p>
-        <form id="login-form">
-          <label for="login-email">Email address</label
-          ><input
-            id="login-email"
-            type="email"
-            autocomplete="username"
-            required
-            placeholder="you@unn.edu.ng"
-          /><label for="login-password">Password</label
-          ><input
-            id="login-password"
-            type="password"
-            autocomplete="current-password"
-            required
-            placeholder="Enter your password"
-          /><button class="primary full" id="login-submit" type="submit">
-            Sign in →
-          </button>
-        </form>
-        <form id="register-form" hidden>
-          <label for="register-role">Account Type</label
-          ><select id="register-role" name="role" required>
-            <option value="student">Student</option>
-            <option value="lecturer">Lecturer</option></select
-          ><label for="register-name">Full name</label
-          ><input
-            id="register-name"
+          class="forgot-password-link"
+          style="text-align: right; margin: 8px 0 14px;"
+        >
+          <a
+            href="./reset-password.html"
+            style="color: #176341; font-weight: 600; text-decoration: none;"
+          >
+            Forgot Password?
+          </a>
+        </p>
+
+        <!-- Sign In Button -->
+        <button
+          class="primary full"
+          id="login-submit"
+          type="submit"
+        >
+          Sign in →
+        </button>
+
+      </form>
+
+      <!-- ====================== -->
+      <!-- REGISTRATION FORM      -->
+      <!-- ====================== -->
+      <form id="register-form" hidden>
+
+        <label for="register-role">Account Type</label>
+        <select id="register-role" name="role" required>
+          <option value="student">Student</option>
+          <option value="lecturer">Lecturer</option>
+        </select>
+
+        <label for="register-name">Full name</label>
+        <input
+          id="register-name"
+          type="text"
+          autocomplete="name"
+          required
+          maxlength="150"
+          placeholder="Your official full name"
+        />
+
+        <label for="register-email">Email address</label>
+        <input
+          id="register-email"
+          type="email"
+          autocomplete="email"
+          required
+          placeholder="Your email"
+        />
+
+        <label for="register-department">Department ID</label>
+        <input
+          id="register-department"
+          type="number"
+          min="1"
+          step="1"
+          placeholder="Valid department database ID"
+          required
+        />
+
+        <p class="field-note">
+          Registration currently needs a valid department ID from the
+          university records. This field will become a department selector
+          once the academic lookup API is confirmed.
+        </p>
+
+        <!-- Student-Specific Fields -->
+        <div id="student-fields">
+
+          <label for="register-matric">Matriculation number</label>
+          <input
+            id="register-matric"
             type="text"
-            autocomplete="name"
-            required
-            maxlength="150"
-            placeholder="Your official full name"
-          /><label for="register-email">Email address</label
-          ><input
-            id="register-email"
-            type="email"
-            autocomplete="email"
-            required
-            placeholder="Your email"
-          /><label for="register-department">Department ID</label
-          ><input
-            id="register-department"
-            type="number"
-            min="1"
-            step="1"
-            placeholder="Valid department database ID"
-            required
+            autocomplete="off"
+            placeholder="Your matriculation number"
           />
-          <p class="field-note">
-            Registration currently needs a valid department ID from the
-            university records. This field will become a department selector
-            once the academic lookup API is confirmed.
-          </p>
-          <div id="student-fields">
-            <label for="register-matric">Matriculation number</label
-            ><input
-              id="register-matric"
-              type="text"
-              autocomplete="off"
-              placeholder="Your matriculation number"
-            /><label for="register-level">Academic level</label
-            ><select id="register-level">
-              <option value="">Select level</option>
-              <option value="100">100 Level</option>
-              <option value="200">200 Level</option>
-              <option value="300">300 Level</option>
-              <option value="400">400 Level</option>
-              <option value="500">500 Level</option>
-              <option value="600">600 Level</option>
-            </select>
-          </div>
-          <div id="lecturer-fields" hidden>
-            <label for="register-staff">Staff ID</label
-            ><input
-              id="register-staff"
-              type="text"
-              placeholder="Your staff identification number"
-            />
-          </div>
-          <label for="register-password">Password</label
-          ><input
-            id="register-password"
-            type="password"
-            autocomplete="new-password"
-            minlength="8"
-            required
-            placeholder="Create a strong password"
-          /><label for="register-confirm">Confirm password</label
-          ><input
-            id="register-confirm"
-            type="password"
-            autocomplete="new-password"
-            required
-            placeholder="Re-enter your password"
-          /><button class="primary full" id="register-submit" type="submit">
-            Create account →
-          </button>
-          <p class="field-note">
-            Librarian and administrator accounts are provisioned securely, not
-            through public registration.
-          </p>
-        </form>
-        <div class="auth-footer">
-          Access is restricted to authorized UNN E-Library accounts.
+
+          <label for="register-level">Academic level</label>
+          <select id="register-level">
+            <option value="">Select level</option>
+            <option value="100">100 Level</option>
+            <option value="200">200 Level</option>
+            <option value="300">300 Level</option>
+            <option value="400">400 Level</option>
+            <option value="500">500 Level</option>
+            <option value="600">600 Level</option>
+          </select>
+
         </div>
-      </section>
-    </main>
-    <link rel="stylesheet" href="./css/auth-figma.css" />
-    <script type="module" src="./js/auth-page.js"></script>
-  </body>
+
+        <!-- Lecturer-Specific Fields -->
+        <div id="lecturer-fields" hidden>
+
+          <label for="register-staff">Staff ID</label>
+          <input
+            id="register-staff"
+            type="text"
+            placeholder="Your staff identification number"
+          />
+
+        </div>
+
+        <!-- Registration Password -->
+        <label for="register-password">Password</label>
+        <input
+          id="register-password"
+          type="password"
+          autocomplete="new-password"
+          minlength="8"
+          required
+          placeholder="Create a strong password"
+        />
+
+        <label for="register-confirm">Confirm password</label>
+        <input
+          id="register-confirm"
+          type="password"
+          autocomplete="new-password"
+          required
+          placeholder="Re-enter your password"
+        />
+
+        <button
+          class="primary full"
+          id="register-submit"
+          type="submit"
+        >
+          Create account →
+        </button>
+
+        <p class="field-note">
+          Librarian and administrator accounts are provisioned securely,
+          not through public registration.
+        </p>
+
+      </form>
+
+      <!-- Authentication Footer -->
+      <div class="auth-footer">
+        Access is restricted to authorized UNN E-Library accounts.
+      </div>
+
+    </section>
+  </main>
+
+  <script type="module" src="./js/auth-page.js"></script>
+
+</body>
 </html>

@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
+from app.models.academic import Department
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -135,6 +136,19 @@ def update_my_profile(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No profile changes were provided."
         )
+    # Role and email are not editable through this endpoint.
+    if ("department_id" in updates or "academic_level" in updates) and current_user.role not in ("student", "lecturer"):
+        raise HTTPException(status_code=403, detail="Academic affiliation cannot be changed for this role.")
+
+    if "department_id" in updates and updates["department_id"] is not None:
+        if db.get(Department, updates["department_id"]) is None:
+            raise HTTPException(status_code=422, detail="Choose a valid department.")
+
+    if "full_name" in updates:
+        if updates["full_name"] is None or not updates["full_name"].strip():
+            raise HTTPException(status_code=422, detail="Full name cannot be blank.")
+        updates["full_name"] = updates["full_name"].strip()
+
     for field, value in updates.items():
         setattr(current_user, field, value)      
     try:

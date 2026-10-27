@@ -1,0 +1,37 @@
+/* UNN E-Library — Figma-aligned Manage Resources. Visual layer only. */
+#content.unn-resource-management {max-width:none;}
+.unn-resource-management .page-heading {display:flex;flex-direction:column;gap:7px;margin:0 0 22px;}
+.unn-resource-management .page-heading h1 {font-size:clamp(1.65rem,2.3vw,2.25rem);line-height:1.2;color:#073f32;margin:0;}
+.unn-resource-management .page-heading .eyebrow {font-size:.7rem;color:#087252;font-weight:800;letter-spacing:.1em;}
+.unn-resource-management .page-heading .subheading {color:#6b7e83;margin:0;font-size:.94rem;}
+.unn-resource-management .manage-toolbar {display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:#fff;border:1px solid #e1eae5;border-radius:13px;padding:14px;margin-bottom:14px;box-shadow:0 3px 12px #10291b05;}
+.unn-resource-management .manage-toolbar input[type=search] {flex:2 1 250px;min-width:170px;}
+.unn-resource-management .manage-toolbar select {flex:1 1 125px;min-width:120px;}
+.unn-resource-management .manage-toolbar button {white-space:nowrap;}
+.unn-resource-management .manage-toolbar .btn-primary-alt {background:#006b46;color:white;border:1px solid #006b46;border-radius:9px;font-weight:700;}
+.unn-resource-management .manage-feedback {font-size:.81rem;color:#678078;margin:8px 2px 12px;}
+.unn-resource-management .manage-collection {background:#fff;border:1px solid #e1eae5;border-radius:13px;overflow-x:auto;overflow-y:visible;box-shadow:0 2px 9px #10291b05;}
+.unn-resource-management .unn-resource-table-header,.unn-resource-management .manage-resource-row {display:grid;grid-template-columns:minmax(200px,2fr) minmax(108px,1fr) minmax(104px,1fr) minmax(94px,.7fr) minmax(140px,1.35fr);align-items:center;column-gap:14px;min-width:865px;padding:13px 18px;}
+.unn-resource-management .unn-resource-table-header {background:#f4f8f6;color:#658077;text-transform:uppercase;font-size:.67rem;font-weight:800;letter-spacing:.06em;border-bottom:1px solid #e6eee9;}
+.unn-resource-management .manage-resource-row {border-bottom:1px solid #e8efeb;background:#fff;border-radius:0;margin:0;box-shadow:none;min-height:76px;}
+.unn-resource-management .manage-resource-row:last-child {border-bottom:none;}
+.unn-resource-management .manage-resource-info {min-width:0;}
+.unn-resource-management .manage-resource-info h3 {color:#16382f;margin:0 0 4px;font-size:.87rem;overflow-wrap:anywhere;}
+.unn-resource-management .manage-resource-info p {color:#72847f;font-size:.76rem;margin:0;}
+.unn-resource-management .unn-resource-author,.unn-resource-management .unn-resource-department {color:#466157;font-size:.78rem;overflow-wrap:anywhere;}
+.unn-resource-management .manage-status {justify-self:start;white-space:nowrap;font-size:.75rem;}
+.unn-resource-management .manage-row-actions {display:flex;flex-wrap:wrap;justify-content:flex-start;gap:5px;}
+.unn-resource-management .manage-row-actions button {padding:7px 9px!important;border-radius:7px!important;font-size:.72rem!important;line-height:1.25;white-space:nowrap;}
+.unn-resource-management .manage-row-actions button:focus-visible,.unn-resource-management .manage-toolbar button:focus-visible {outline:3px solid #8dceb4;outline-offset:2px;}
+.unn-resource-management .manage-row-actions button.danger-action {color:#b91c1c;border-color:#fecaca;background:#fff5f5;}
+.unn-resource-management .pager {margin-top:14px;display:flex;align-items:center;justify-content:center;gap:12px;}
+@media(max-width:700px){.unn-resource-management .manage-toolbar {padding:11px;}.unn-resource-management .manage-toolbar input[type=search]{flex-basis:100%;}.unn-resource-management .page-heading h1{font-size:1.75rem;}}
+/* Reader-only action; doesn't affect librarian controls. */
+.unn-report-issue-button {margin-left:8px;border:1px solid #e5b0a8!important;background:#fff!important;color:#a63a30!important;font-weight:700;}
+.unn-report-modal-backdrop{position:fixed;inset:0;background:#0f201ca8;z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px;}
+.unn-report-modal{background:#fff;border-radius:16px;box-shadow:0 22px 85px #0003;max-width:510px;width:100%;padding:26px;display:grid;gap:13px;color:#173e32;}
+.unn-report-modal h2{margin:0;font-size:1.4rem;}.unn-report-modal p{margin:0;color:#60776c;}.unn-report-modal label{display:grid;gap:7px;font-size:.85rem;font-weight:700;}
+.unn-report-modal select,.unn-report-modal textarea{width:100%;box-sizing:border-box;border:1px solid #d7e4db;border-radius:9px;padding:11px;background:white;font:inherit;color:#193e34;}
+.unn-report-modal textarea{resize:vertical;min-height:110px;}.unn-report-modal-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;}
+.unn-report-modal-actions button{border-radius:9px;padding:10px 16px;font-weight:700;}.unn-report-modal-actions button[type=submit]{background:#006c47;border:1px solid #006c47;color:white;}.unn-report-modal-actions button[type=button]{border:1px solid #d7e4db;background:#fff;color:#25473d;}
+.unn-report-modal-actions button:disabled{opacity:.6;cursor:wait;}.unn-report-modal [role=alert]{color:#aa342d;min-height:1em;font-size:.83rem;}
