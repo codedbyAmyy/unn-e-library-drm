@@ -136,7 +136,7 @@ export async function showLibraryAnalytics({ content, user } = {}) {
       const toUsers=mk("button","unn-analytics-secondary","Manage users"),toResources=mk("button","unn-analytics-secondary","Browse resources");
       [toUsers,toResources].forEach(b=>b.type="button");toUsers.onclick=()=>nav("users");toResources.onclick=()=>nav("resources-admin");
       bottom.append(toUsers,toResources);
-      body.replaceChildren(summary,panels,recent,bottom);
+      body.replaceChildren(summary,panels,recent);
     } catch(e) {
       if(current!==generation || !root.isConnected) return;
       const msg=mk("div","unn-analytics-error");msg.setAttribute("role","alert");

@@ -1,4 +1,5 @@
 import { showLibrarianResources } from "./librarian.js";
+import { showReadingHistoryClean } from "./reading-history-clean.js";
 import { apiRequest, API_BASE, getToken } from "./api.js";
 import { getCurrentUser, requireLogin, logout } from "./auth.js";
 import { makeBookmarkControl, showMyLibrary } from './bookmarks.js';
@@ -290,7 +291,7 @@ async function library() {
   async function fetchPage() {
     cards.replaceChildren();
     pager.replaceChildren();
-    stats.textContent = "Loading results…";
+    stats.textContent = q.value.trim() ? "Searching resources…" : "";
     try {
       const params = { limit: String(limit), offset: String(offset) };
       if (q.value.trim()) {
@@ -301,7 +302,7 @@ async function library() {
       const list = asItems(result).filter(
         (r) => r.is_published !== false && !r.is_archived,
       );
-      stats.textContent = `${result.total ?? list.length} resources found`;
+      stats.textContent = q.value.trim() ? `${result.total ?? list.length} matching resources found` : "";
       if (!list.length)
         empty(cards, "No published resources matched your search.");
       else list.forEach((r) => cards.append(makeCard(r)));
@@ -805,7 +806,7 @@ async function render(name) {
         await showMyLibrary({ content: $("content"), openPdf, showDetails });
         break;
       case "history":
-        await history();
+        await showReadingHistoryClean({content: $("content"), openPdf, showDetails});
         break;
       case "statistics":
         await showReadingStatistics({

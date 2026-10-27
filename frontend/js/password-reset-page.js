@@ -26,17 +26,19 @@ requestForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const button = requestForm.querySelector('button[type="submit"]');
   button.disabled = true;
-  setFeedback("Submitting your request…");
+  setFeedback("");
+  button.textContent="Sending…";
   try {
     const response = await apiRequest("/auth/forgot-password", {
       method: "POST",
       body: JSON.stringify({ email: $("reset-email").value.trim() }),
     });
-    setFeedback(response.message);
+    setFeedback("If an account uses that email, you’ll receive a password reset link shortly. Please check your inbox.");
   } catch (err) {
     setFeedback(err.message || "Could not submit the request.", true);
   } finally {
     button.disabled = false;
+    button.textContent="Send reset link";
   }
 });
 

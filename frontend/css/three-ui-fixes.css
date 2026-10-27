@@ -1,0 +1,239 @@
+/* UNN E-Library: last visual adjustments only. No JavaScript changes. */
+/* Compact Forgot Password link on the existing login/register layout. */
+.auth-card .forgot-password-link {
+  margin: 6px 0 9px !important;
+  text-align: right;
+}
+.auth-card .forgot-password-link a {
+  display: inline-block;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  line-height: 1.3;
+  color: #176341;
+}
+.auth-card .forgot-password-link a:hover {
+  text-decoration: underline !important;
+}
+.auth-card .forgot-password-link a:focus-visible {
+  outline: 2px solid #c9a227;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+.auth-card #login-form .primary.full {
+  margin-top: 10px;
+}
+
+/* Password recovery should share the login card's restrained dimensions. */
+body.auth-body:has(.reset-card) {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f8f7f2;
+}
+body.auth-body:has(.reset-card) .auth-top {
+  position: relative;
+  z-index: 2;
+  border: 0;
+  background: transparent;
+  padding: 18px clamp(20px, 4vw, 52px);
+}
+body.auth-body:has(.reset-card) .auth-top .brand {
+  font-size: 15px;
+}
+body.auth-body:has(.reset-card) .auth-top .brand small {
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+body.auth-body:has(.reset-card) .auth-shell {
+  width: min(760px, calc(100% - 36px));
+  max-width: 760px;
+  min-height: 0;
+  margin: auto;
+  display: grid;
+  grid-template-columns: 1fr 1.03fr;
+  border-radius: 4px;
+  box-shadow: 0 13px 34px rgba(0, 54, 30, 0.09);
+  overflow: hidden;
+}
+body.auth-body:has(.reset-card) .auth-brand {
+  min-height: 410px;
+  padding: 28px 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  background: linear-gradient(160deg, #004427, #00301b);
+}
+body.auth-body:has(.reset-card) .auth-insignia {
+  display: none;
+}
+body.auth-body:has(.reset-card) .auth-brand .eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.4px;
+  margin: 5px 0 10px;
+  color: #d6b953;
+}
+body.auth-body:has(.reset-card) .auth-brand h1 {
+  font:
+    600 23px/1.23 Georgia,
+    serif;
+  letter-spacing: -0.5px;
+  margin: 7px 0 13px;
+}
+body.auth-body:has(.reset-card) .auth-brand > p:not(.eyebrow) {
+  font-size: 12px;
+  line-height: 1.65;
+  margin: 0;
+  color: #d8eae0;
+}
+body.auth-body:has(.reset-card) .reset-card {
+  padding: 30px 32px;
+  max-height: min(76vh, 720px);
+  overflow-y: auto;
+}
+body.auth-body:has(.reset-card) .reset-card > .eyebrow {
+  display: none;
+}
+body.auth-body:has(.reset-card) .reset-card h2 {
+  font:
+    600 22px/1.25 Georgia,
+    serif;
+  letter-spacing: -0.45px;
+  color: #005333;
+  margin: 10px 0 5px;
+}
+body.auth-body:has(.reset-card) .reset-card .subtitle {
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+body.auth-body:has(.reset-card) .reset-card form {
+  display: grid;
+  gap: 7px;
+}
+body.auth-body:has(.reset-card) .reset-card form[hidden] {
+  display: none;
+}
+body.auth-body:has(.reset-card) .reset-card form label {
+  font-size: 10.5px;
+  margin: 10px 0 2px;
+  font-weight: 650;
+}
+body.auth-body:has(.reset-card) .reset-card form input {
+  font-size: 11.5px;
+  min-height: 35px;
+  padding: 9px 11px;
+  border-radius: 6px;
+}
+body.auth-body:has(.reset-card) .reset-card form button {
+  width: 100%;
+  min-height: 37px;
+  margin-top: 12px;
+  padding: 10px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+body.auth-body:has(.reset-card) .reset-footnote {
+  margin-top: 14px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+body.auth-body:has(.reset-card) #reset-message {
+  min-height: 0;
+  margin: 6px 0;
+  color: #396653;
+  font-size: 11px;
+  line-height: 1.5;
+}
+body.auth-body:has(.reset-card) #reset-message.reset-error {
+  color: #af2a2a;
+}
+@media (max-width: 680px) {
+  body.auth-body:has(.reset-card) .auth-shell {
+    width: min(480px, calc(100% - 30px));
+    display: block;
+    margin: 22px auto;
+  }
+  body.auth-body:has(.reset-card) .auth-brand {
+    display: none;
+  }
+  body.auth-body:has(.reset-card) .reset-card {
+    max-height: none;
+    padding: 25px 22px;
+  }
+}
+
+/* Admin User Management: distribute the columns within laptop width. */
+@media (min-width: 901px) {
+  .aum-table-scroll {
+    overflow-x: visible !important;
+  }
+  .aum-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: fixed !important;
+  }
+  .aum-table th,
+  .aum-table td {
+    padding: 12px 8px !important;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .aum-table th:nth-child(1),
+  .aum-table td:nth-child(1) {
+    width: 27%;
+  }
+  .aum-table th:nth-child(2),
+  .aum-table td:nth-child(2) {
+    width: 12%;
+  }
+  .aum-table th:nth-child(3),
+  .aum-table td:nth-child(3) {
+    width: 19%;
+  }
+  .aum-table th:nth-child(4),
+  .aum-table td:nth-child(4) {
+    width: 13%;
+  }
+  .aum-table th:nth-child(5),
+  .aum-table td:nth-child(5) {
+    width: 12%;
+  }
+  .aum-table th:nth-child(6),
+  .aum-table td:nth-child(6) {
+    width: 17%;
+  }
+  .aum-name {
+    font-size: 0.83rem;
+  }
+  .aum-email {
+    font-size: 0.72rem;
+    overflow-wrap: anywhere;
+  }
+  .aum-row-actions {
+    display: flex;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start;
+    gap: 4px;
+  }
+  .aum-row-actions .aum-btn {
+    flex: 0 0 33px;
+    width: 33px;
+    height: 34px;
+    min-height: 34px;
+    padding: 4px !important;
+    display: grid;
+    place-items: center;
+  }
+  .aum-row-actions .aum-protected {
+    font-size: 0.7rem;
+  }
+}
+/* On small touch screens, allow scrolling instead of squashing content. */
+@media (max-width: 900px) {
+  .aum-table-scroll {
+    overflow-x: auto;
+  }
+  .aum-table {
+    min-width: 780px;
+  }
+}

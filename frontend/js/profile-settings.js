@@ -62,7 +62,8 @@ export async function showProfileSettings({ content, user, onSaved }) {
   const cancel=make("button", "pf-button pf-secondary", "Cancel");cancel.type="button";cancel.hidden=true;controls.append(cancel,save);
   form.append(feedback,controls);personal.append(form);grid.append(personal);
   const security=make("section", "pf-card");security.append(make("h2", "", "Password & Security"),make("p", "pf-card-desc", "Keep your library account secure."));
-  security.append(make("p", "pf-hint", "Password changes are not available through the current profile API. Contact your library administrator if you need to reset your password."));grid.append(security);
+  security.append(make("p", "pf-hint", "Need to update your password? Request a secure password-reset link."));
+  const resetLink=make("a", "pf-button pf-secondary", "Reset Password");resetLink.href="./reset-password.html";security.append(resetLink);grid.append(security);
   const info=make("section", "pf-card");info.append(make("h2", "", "Account Information"));
   const values=make("dl", "pf-details");for(const [k,v] of [["Account Status",profile.is_active?"Active":"Inactive"],["Access Level",statusText(profile.role)],["Department", departmentName()],["Institution","UNN"]]){values.append(make("dt","",k),make("dd","",v));}
   info.append(values);grid.append(info);

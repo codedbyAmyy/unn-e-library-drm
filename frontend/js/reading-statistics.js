@@ -37,7 +37,7 @@ export async function showReadingStatistics({ content, openPdf, showDetails }) {
     const entries = Array.isArray(result) ? result : (result.items || []);
     const distinctIds = [...new Set(entries.map(e => Number(e.resource_id)).filter(id => Number.isInteger(id) && id > 0))];
     // Fetch only most recent resources to keep the page responsive.
-    const ids = distinctIds.slice(0,12);
+    const ids = distinctIds.slice(0,20);
     const details = new Map();
     const progress = new Map();
     await Promise.all(ids.map(async id=>{
@@ -59,11 +59,14 @@ export async function showReadingStatistics({ content, openPdf, showDetails }) {
       c.append(el('p','',label),el('strong','',value),el('small','',note));
       metrics.append(c);
     }
-    summary.textContent = `Summary figures cover all saved records. Showing the latest ${entries.length} of ${totals.reading_records} reading records for recent activity, with page progress for up to ${ids.length} resources. Reading time includes only duration actually recorded.`;
+    summary.textContent = "Your reading overview is up to date.";
     const list = el('div','unn-stats-list');
     if (!ids.length) list.append(el('p','unn-stats-empty','No reading records yet. Open a protected PDF to start tracking your progress.'));
+    let visible = 0;
     for (const id of ids) {
       const r = details.get(id), p = progress.get(id);
+      if (!r) continue;
+      if (visible++ >= 5) break;
       const entry = entries.find(x=>Number(x.resource_id)===id);
       const pct = p?.total_pages>0 ? Math.min(100, Math.round(p.current_page / p.total_pages * 100)) : null;
       const row = el('article','unn-stats-resource');
@@ -82,6 +85,8 @@ export async function showReadingStatistics({ content, openPdf, showDetails }) {
       list.append(row);
     }
     history.append(list);
+    const seeAll = el('button','unn-stats-button secondary','See all reading history');
+    seeAll.type='button'; seeAll.addEventListener('click',()=>{location.hash='#history';}); history.append(seeAll);
     const types = new Map();
     for (const r of details.values()) { const type=(r.resource_type||'other').replaceAll('_',' ');types.set(type,(types.get(type)||0)+1); }
     if (!types.size) breakdown.append(el('p','unn-stats-empty','Resource types will appear once you have reading history.'));

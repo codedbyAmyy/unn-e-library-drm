@@ -136,6 +136,13 @@ export async function showAdminUserManagement({content, user}) {
           onConfirm:()=>saveChange(record,'status',nextActive)
         }),nextActive?'aum-btn aum-outline':'aum-btn aum-warn'));
       }else actionGroup.append(h('span','aum-protected',record.id===user.id?'Your account':'Protected admin'));
+      for(const control of actionGroup.querySelectorAll('button')){
+        const label=control.textContent.trim();
+        control.title=label;
+        control.setAttribute('aria-label',label);
+        control.classList.add('aum-compact-icon');
+        control.textContent=({'View':'◉','Change Role':'⇄','Activate':'✓','Deactivate':'⊘'})[label] || label;
+      }
       actions.append(actionGroup);tr.append(identity,roleCell,academic,joined,account,actions);tbody.append(tr);
     }
   }
